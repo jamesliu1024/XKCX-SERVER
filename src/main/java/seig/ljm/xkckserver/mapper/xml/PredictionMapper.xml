@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="seig.ljm.xkckserver.mapper.PredictionMapper">
+
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="seig.ljm.xkckserver.entity.Prediction">
+        <id column="prediction_id" property="predictionId" />
+        <result column="predict_date" property="predictDate" />
+        <result column="predicted_count" property="predictedCount" />
+        <result column="generate_time" property="generateTime" />
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        prediction_id, predict_date, predicted_count, generate_time
+    </sql>
+
+</mapper>

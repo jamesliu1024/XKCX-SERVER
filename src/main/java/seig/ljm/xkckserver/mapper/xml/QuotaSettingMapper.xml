@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="seig.ljm.xkckserver.mapper.QuotaSettingMapper">
+
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="seig.ljm.xkckserver.entity.QuotaSetting">
+        <id column="quota_id" property="quotaId" />
+        <result column="date" property="date" />
+        <result column="max_quota" property="maxQuota" />
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        quota_id, date, max_quota
+    </sql>
+
+</mapper>

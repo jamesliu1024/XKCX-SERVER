@@ -1,0 +1,37 @@
+spring:
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://localhost:50001/xkck?useUnicode=true&characterEncoding=utf-8&serverTimezone=UTC
+    username: user
+    password: 123456
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.MySQLDialect
+
+mybatis-plus:
+    mapper-locations: classpath*:mapper/xml/*.xml
+    type-aliases-package: seig.ljm.xkckserver.entity
+    configuration:
+      map-underscore-to-camel-case: true
+      cache-enabled: false
+
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+    operationsSorter: alpha # 按字母顺序排序操作
+    tagsSorter: alpha # 按字母顺序排序标签
+    docExpansion: none # 默认展开状态
+
+# Logger Config
+logging:
+  level:
+    com.baomidou.mybatisplus.samples.quickstart: debug
+
+server:
+  port: 8123
