@@ -51,9 +51,9 @@ public class RFIDCard implements Serializable {
     @TableField("status")
     private String status;
 
-    @Schema(name = "expirationTime", description = "")
+    @Schema(name = "expireTime", description = "卡片失效时间")
     @TableField("expiration_time")
-    private LocalDateTime expirationTime;
+    private LocalDateTime expireTime;
 
     @Schema(name = "reservationId", description = "")
     @TableField("reservation_id")
@@ -66,4 +66,8 @@ public class RFIDCard implements Serializable {
     @Schema(name = "remarks", description = "")
     @TableField("remarks")
     private String remarks;
+
+    @Schema(name = "updateTime", description = "更新时间")
+    @TableField("update_time")
+    private LocalDateTime updateTime;
 }

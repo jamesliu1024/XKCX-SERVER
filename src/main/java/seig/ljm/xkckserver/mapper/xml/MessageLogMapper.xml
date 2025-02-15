@@ -16,4 +16,37 @@
         message_id, device_id, payload, receive_time, status
     </sql>
 
+    <!-- 获取每日通信统计 -->
+    <select id="getDailyStats" resultType="java.util.Map">
+        SELECT 
+            DATE(receive_time) as date,
+            COUNT(*) as totalMessages,
+            SUM(CASE WHEN status = 'processed' THEN 1 ELSE 0 END) as processedCount,
+            SUM(CASE WHEN status != 'processed' THEN 1 ELSE 0 END) as errorCount
+        FROM MessageLog
+        WHERE receive_time BETWEEN #{startDate} AND #{endDate}
+        GROUP BY DATE(receive_time)
+        ORDER BY date ASC
+    </select>
+
+    <select id="getRecentByDeviceId" resultMap="BaseResultMap">
+        SELECT 
+        <include refid="Base_Column_List"/>
+        FROM message_log
+        WHERE device_id = #{deviceId}
+        ORDER BY receive_time DESC
+        LIMIT #{limit}
+    </select>
+
+    <select id="getErrorLogs" resultMap="BaseResultMap">
+        SELECT 
+        <include refid="Base_Column_List"/>
+        FROM message_log
+        WHERE status != 'processed'
+        <if test="startTime != null and endTime != null">
+            AND receive_time BETWEEN #{startTime} AND #{endTime}
+        </if>
+        ORDER BY receive_time DESC
+    </select>
+
 </mapper>

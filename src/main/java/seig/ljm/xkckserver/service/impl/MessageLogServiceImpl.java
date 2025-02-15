@@ -6,6 +6,10 @@ import seig.ljm.xkckserver.service.MessageLogService;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Map;
+
 /**
  * <p>
  *  服务实现类
@@ -16,5 +20,18 @@ import org.springframework.stereotype.Service;
  */
 @Service
 public class MessageLogServiceImpl extends ServiceImpl<MessageLogMapper, MessageLog> implements MessageLogService {
+    @Override
+    public List<Map<String, Object>> getDailyStats(LocalDateTime startDate, LocalDateTime endDate) {
+        return baseMapper.getDailyStats(startDate, endDate);
+    }
 
+    @Override
+    public List<MessageLog> getRecentByDeviceId(Integer deviceId, Integer limit) {
+        return baseMapper.getRecentByDeviceId(deviceId, limit);
+    }
+
+    @Override
+    public List<MessageLog> getErrorLogs(LocalDateTime startTime, LocalDateTime endTime) {
+        return baseMapper.getErrorLogs(startTime, endTime);
+    }
 }

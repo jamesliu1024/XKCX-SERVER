@@ -18,4 +18,29 @@
         reservation_id, visitor_id, start_time, end_time, host_confirm, status, create_time
     </sql>
 
+    <!-- 获取日期范围内的预约统计数据 -->
+    <select id="getReservationStatistics" resultType="java.util.Map">
+        SELECT 
+            DATE(start_time) as visit_date,
+            COUNT(*) as total_count,
+            SUM(CASE WHEN status = 'confirmed' THEN 1 ELSE 0 END) as confirmed_count,
+            SUM(CASE WHEN status = 'canceled' THEN 1 ELSE 0 END) as canceled_count
+        FROM Reservation
+        WHERE start_time BETWEEN #{startDate} AND #{endDate}
+        GROUP BY DATE(start_time)
+        ORDER BY visit_date
+    </select>
+
+    <!-- 获取访客详细预约记录 -->
+    <select id="getVisitorDetailedReservations" resultMap="BaseResultMap">
+        SELECT 
+            <include refid="Base_Column_List" />
+        FROM reservation r
+        WHERE r.visitor_id = #{visitorId}
+        <if test="status != null">
+            AND r.status = #{status}
+        </if>
+        ORDER BY r.create_time DESC
+    </select>
+
 </mapper>

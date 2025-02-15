@@ -23,4 +23,15 @@
         visitor_id, name, phone, wechat_openid, id_type, id_number, reason, host_department, host_name, status, expire_time, create_time
     </sql>
 
+    <!-- 自定义SQL查询 -->
+    <select id="selectVisitorStats" resultType="java.util.Map">
+        SELECT 
+            COUNT(*) as total_visitors,
+            COUNT(CASE WHEN status = 'pending' THEN 1 END) as pending_count,
+            COUNT(CASE WHEN status = 'approved' THEN 1 END) as approved_count,
+            COUNT(CASE WHEN status = 'expired' THEN 1 END) as expired_count
+        FROM Visitor
+        WHERE create_time BETWEEN #{startTime} AND #{endTime}
+    </select>
+
 </mapper>

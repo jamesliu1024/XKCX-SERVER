@@ -52,6 +52,7 @@ CREATE TABLE RFIDCard (
     return_time DATETIME DEFAULT NULL,                    -- 回收时间（如卡片回收时记录）
     status ENUM('available', 'issued', 'lost', 'deactivated') DEFAULT 'available', -- 卡片状态
     expiration_time DATETIME,                             -- 卡片失效时间（与预约结束时间保持一致）
+    update_time DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP, -- 更新时间
     reservation_id INT,                                   -- 关联的预约记录ID
     last_admin_id INT NOT NULL,                           -- 最后操作管理员的 ID
     remarks VARCHAR(255),                                 -- 备注信息

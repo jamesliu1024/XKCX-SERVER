@@ -14,4 +14,28 @@
         quota_id, date, max_quota
     </sql>
 
+    <!-- 根据日期范围统计配额使用情况 -->
+    <select id="selectQuotaStats" resultType="java.util.Map">
+        SELECT 
+            date,
+            max_quota as total_quota,
+            (SELECT COUNT(*) 
+             FROM Reservation
+             WHERE DATE(start_time) = qs.date 
+             AND status = 'confirmed') as used_quota
+        FROM QuotaSetting qs
+        WHERE date BETWEEN #{startDate} AND #{endDate}
+        ORDER BY date
+    </select>
+
+    <!-- 获取未来七天的配额设置 -->
+    <select id="selectUpcomingQuotas" resultMap="BaseResultMap">
+        SELECT 
+            <include refid="Base_Column_List" />
+        FROM quota_setting
+        WHERE date >= #{currentDate}
+        AND date <= DATE_ADD(#{currentDate}, INTERVAL 7 DAY)
+        ORDER BY date
+    </select>
+
 </mapper>
