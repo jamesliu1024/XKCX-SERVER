@@ -5,11 +5,12 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+import seig.ljm.xkckserver.entity.AccessDevice;
 import seig.ljm.xkckserver.service.AccessDeviceService;
+
+import java.util.List;
 
 /**
  * <p>
@@ -42,6 +43,49 @@ public class AccessDeviceController {
     @GetMapping("/{id}")
     public String get(@Parameter(description = "设备ID") @PathVariable("id") Integer id) {
         return accessDeviceService.getById(id).toString();
+    }
+
+    @Operation(summary = "获取所有设备列表")
+    @GetMapping("/list")
+    public ResponseEntity<List<AccessDevice>> list() {
+        return ResponseEntity.ok(accessDeviceService.list());
+    }
+
+    @Operation(summary = "添加新设备")
+    @PostMapping("/add")
+    public ResponseEntity<Boolean> add(@RequestBody AccessDevice device) {
+        return ResponseEntity.ok(accessDeviceService.save(device));
+    }
+
+    @Operation(summary = "更新设备信息")
+    @PutMapping("/update")
+    public ResponseEntity<Boolean> update(@RequestBody AccessDevice device) {
+        return ResponseEntity.ok(accessDeviceService.updateById(device));
+    }
+
+    @Operation(summary = "删除设备")
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Boolean> delete(@PathVariable Integer id) {
+        return ResponseEntity.ok(accessDeviceService.removeById(id));
+    }
+
+    @Operation(summary = "更新设备状态")
+    @PutMapping("/{id}/status/{status}")
+    public ResponseEntity<Boolean> updateStatus(
+            @PathVariable Integer id,
+            @PathVariable String status) {
+        AccessDevice device = new AccessDevice();
+        device.setDeviceId(id);
+        device.setStatus(status);
+        return ResponseEntity.ok(accessDeviceService.updateById(device));
+    }
+
+    @Operation(summary = "获取在线设备列表")
+    @GetMapping("/online")
+    public ResponseEntity<List<AccessDevice>> getOnlineDevices() {
+        return ResponseEntity.ok(accessDeviceService.lambdaQuery()
+                .eq(AccessDevice::getStatus, "online")
+                .list());
     }
 
 }

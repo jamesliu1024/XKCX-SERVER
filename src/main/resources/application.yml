@@ -1,4 +1,6 @@
 spring:
+  application:
+    name: xkck-server
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
     url: jdbc:mysql://localhost:50001/xkck?useUnicode=true&characterEncoding=utf-8&serverTimezone=UTC
@@ -22,11 +24,15 @@ mybatis-plus:
 springdoc:
   api-docs:
     path: /v3/api-docs
+    version: openapi_3_0
+    enabled: true
   swagger-ui:
-    path: /swagger-ui.html
+    path: /swagger-ui/index.html
     operationsSorter: alpha # 按字母顺序排序操作
     tagsSorter: alpha # 按字母顺序排序标签
     docExpansion: none # 默认展开状态
+    version: 3.0.0
+    enabled: true
 
 # Logger Config
 logging:
