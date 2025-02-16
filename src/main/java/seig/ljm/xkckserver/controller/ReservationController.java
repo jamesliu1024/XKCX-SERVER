@@ -24,24 +24,52 @@ import java.time.LocalDateTime;
  */
 @RestController
 @RequestMapping("/reservation")
-@Tag(name = "预约管理", description = "访客预约相关接口")
+@Tag(name = "Reservation", description = "访客预约")
 public class ReservationController {
 
-    @Autowired
     private ReservationService reservationService;
-
     @Autowired
+    public ReservationController(ReservationService reservationService) {
+        this.reservationService = reservationService;
+    }
+
     private QuotaSettingService quotaSettingService;
+    @Autowired
+    public void setQuotaSettingService(QuotaSettingService quotaSettingService) {
+        this.quotaSettingService = quotaSettingService;
+    }
 
     @PostMapping
     @Operation(summary = "创建新预约")
-    public ResponseEntity<Reservation> createReservation(@RequestBody Reservation reservation) {
-        // 检查日期配额
-        if (!quotaSettingService.isQuotaAvailable(reservation.getStartTime().toLocalDate())) {
-            return ResponseEntity.badRequest().build();
+    public ResponseEntity<Object> createReservation(@RequestBody Reservation reservation) {
+        // 参数验证
+        if (reservation.getStartTime() == null) {
+            return ResponseEntity.badRequest().body("开始时间不能为空");
         }
-        reservationService.save(reservation);
-        return ResponseEntity.ok(reservation);
+        if (reservation.getEndTime() == null) {
+            return ResponseEntity.badRequest().body("结束时间不能为空");
+        }
+        if (reservation.getVisitorId() == null) {
+            return ResponseEntity.badRequest().body("访客ID不能为空");
+        }
+        
+        // 检查日期配额
+        try {
+            if (!quotaSettingService.isQuotaAvailable(reservation.getStartTime().toLocalDate())) {
+                return ResponseEntity.badRequest().body("当日预约人数已满");
+            }
+            
+            // 设置默认值
+            reservation.setCreateTime(LocalDateTime.now());
+            reservation.setUpdateTime(LocalDateTime.now());
+            reservation.setStatus("pending");
+            reservation.setHostConfirm("pending");
+            
+            reservationService.save(reservation);
+            return ResponseEntity.ok(reservation);
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().body("创建预约失败：" + e.getMessage());
+        }
     }
 
     @DeleteMapping("/{id}")
@@ -63,6 +91,7 @@ public class ReservationController {
             @PathVariable Integer id,
             @RequestBody Reservation reservation) {
         reservation.setReservationId(id);
+        reservation.setUpdateTime(LocalDateTime.now());  // 设置更新时间
         boolean success = reservationService.updateById(reservation);
         return ResponseEntity.ok(success);
     }
@@ -75,6 +104,7 @@ public class ReservationController {
         Reservation reservation = new Reservation();
         reservation.setReservationId(id);
         reservation.setHostConfirm("confirmed");
+        reservation.setUpdateTime(LocalDateTime.now());  // 设置更新时间
         boolean success = reservationService.updateById(reservation);
         return ResponseEntity.ok(success);
     }
@@ -87,6 +117,7 @@ public class ReservationController {
         Reservation reservation = new Reservation();
         reservation.setReservationId(id);
         reservation.setHostConfirm("rejected");
+        reservation.setUpdateTime(LocalDateTime.now());  // 设置更新时间
         boolean success = reservationService.updateById(reservation);
         return ResponseEntity.ok(success);
     }

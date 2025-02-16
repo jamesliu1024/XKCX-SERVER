@@ -16,7 +16,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/quotaSetting")
-@Tag(name = "配额管理", description = "日期配额设置相关接口")
+@Tag(name = "QuotaSetting", description = "日期配额")
 public class QuotaSettingController {
 
     @Autowired

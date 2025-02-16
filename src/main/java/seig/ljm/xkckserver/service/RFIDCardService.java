@@ -52,4 +52,29 @@ public interface RFIDCardService extends IService<RFIDCard> {
      * 延长RFID卡有效期
      */
     boolean extendCardExpiration(Integer cardId, LocalDateTime newExpirationTime, Integer adminId);
+    
+    /**
+     * 获取各状态的卡片数量统计
+     */
+    List<Map<String, Object>> getStatusStatistics();
+    
+    /**
+     * 获取即将过期的卡片列表
+     */
+    List<RFIDCard> getNearExpirationCards();
+    
+    /**
+     * 批量更新卡片状态
+     */
+    boolean batchUpdateStatus(List<Integer> cardIds, String status, Integer adminId);
+    
+    /**
+     * 发放RFID卡
+     * @param visitorId 访客ID
+     * @param reservationId 预约ID
+     * @param adminId 管理员ID
+     * @param expirationTime 失效时间
+     * @return 发放的卡片信息
+     */
+    RFIDCard issueCard(Integer visitorId, Integer reservationId, Integer adminId, LocalDateTime expirationTime);
 }

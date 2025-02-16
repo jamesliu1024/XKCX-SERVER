@@ -26,10 +26,15 @@ import lombok.ToString;
 @ToString
 @TableName("RFIDCard")
 //@ApiModel(value = "RFIDCard对象", description = "")
-@Schema(name = "RFIDCard", description = "")
+@Schema(name = "RFIDCard", description = "RFID门禁卡")
 public class RFIDCard implements Serializable {
 
     private static final long serialVersionUID = 1L;
+
+    public static final String STATUS_AVAILABLE = "available";
+    public static final String STATUS_ISSUED = "issued";
+    public static final String STATUS_LOST = "lost";
+    public static final String STATUS_DEACTIVATED = "deactivated";
 
     @Schema(name = "cardId", description = "")
     @TableId(value = "card_id", type = IdType.AUTO)
@@ -47,13 +52,13 @@ public class RFIDCard implements Serializable {
     @TableField("return_time")
     private LocalDateTime returnTime;
 
-    @Schema(name = "status", description = "")
+    @Schema(name = "status", description = "卡片状态:available-可用,issued-已发放,lost-丢失,deactivated-已停用")
     @TableField("status")
     private String status;
 
-    @Schema(name = "expireTime", description = "卡片失效时间")
+    @Schema(name = "expireTime", description = "卡片失效时间（一般与预约结束时间一致）")
     @TableField("expiration_time")
-    private LocalDateTime expireTime;
+    private LocalDateTime expirationTime;
 
     @Schema(name = "reservationId", description = "")
     @TableField("reservation_id")
@@ -67,7 +72,7 @@ public class RFIDCard implements Serializable {
     @TableField("remarks")
     private String remarks;
 
-    @Schema(name = "updateTime", description = "更新时间")
+    @Schema(name = "updateTime", description = "最后更新时间")
     @TableField("update_time")
     private LocalDateTime updateTime;
 }

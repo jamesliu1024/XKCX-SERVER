@@ -16,8 +16,11 @@ import java.time.LocalDateTime;
 @Service
 public class VisitorServiceImpl extends ServiceImpl<VisitorMapper, Visitor> implements VisitorService {
 
-    @Autowired
     private VisitorMapper visitorMapper;
+    @Autowired
+    public VisitorServiceImpl(VisitorMapper visitorMapper) {
+        this.visitorMapper = visitorMapper;
+    }
 
     @Override
     public Visitor getByOpenId(String openId) {

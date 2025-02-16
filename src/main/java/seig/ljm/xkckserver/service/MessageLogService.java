@@ -2,6 +2,8 @@ package seig.ljm.xkckserver.service;
 
 import seig.ljm.xkckserver.entity.MessageLog;
 import com.baomidou.mybatisplus.extension.service.IService;
+
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
@@ -18,7 +20,7 @@ public interface MessageLogService extends IService<MessageLog> {
     /**
      * 获取每日通信统计
      */
-    List<Map<String, Object>> getDailyStats(LocalDateTime startDate, LocalDateTime endDate);
+    List<Map<String, Object>> getDailyStats(LocalDate startDate, LocalDate endDate);
     
     /**
      * 获取指定设备的最近通信记录

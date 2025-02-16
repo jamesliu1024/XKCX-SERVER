@@ -15,6 +15,8 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 
+import static seig.ljm.xkckserver.entity.RFIDCard.STATUS_AVAILABLE;
+
 /**
  * <p>
  *  前端控制器
@@ -25,7 +27,7 @@ import java.util.Map;
  */
 @RestController
 @RequestMapping("/rfid-card")
-@Tag(name = "RFID卡管理", description = "RFID卡相关接口")
+@Tag(name = "RFIDCard", description = "RFID卡")
 public class RFIDCardController {
 
     @Autowired
@@ -33,13 +35,20 @@ public class RFIDCardController {
 
     @PostMapping("/issue")
     @Operation(summary = "发放RFID卡")
-    public ResponseEntity<RFIDCard> issueCard(
-            @Parameter(description = "RFID卡信息") 
-            @RequestBody RFIDCard rfidCard) {
-        rfidCard.setIssueTime(LocalDateTime.now());
-        rfidCard.setStatus("issued");
-        rfidCardService.save(rfidCard);
-        return ResponseEntity.ok(rfidCard);
+    public ResponseEntity<?> issueCard(
+            @Parameter(description = "访客ID") @RequestParam Integer visitorId,
+            @Parameter(description = "预约ID") @RequestParam Integer reservationId,
+            @Parameter(description = "管理员ID") @RequestParam Integer adminId,
+            @Parameter(description = "失效时间") @RequestParam @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") LocalDateTime expirationTime) {
+        try {
+            RFIDCard card = rfidCardService.issueCard(visitorId, reservationId, adminId, expirationTime);
+            if (card != null) {
+                return ResponseEntity.ok(card);
+            }
+            return ResponseEntity.badRequest().body("No available cards found");
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
     }
 
     @PutMapping("/{cardId}/return")
@@ -52,8 +61,8 @@ public class RFIDCardController {
         RFIDCard rfidCard = new RFIDCard();
         rfidCard.setCardId(cardId);
         rfidCard.setReturnTime(LocalDateTime.now());
-        rfidCard.setStatus("returned");
-        rfidCard.setLastAdminId(adminId);
+        rfidCard.setStatus(STATUS_AVAILABLE);
+    rfidCard.setLastAdminId(adminId);
         boolean success = rfidCardService.updateById(rfidCard);
         return ResponseEntity.ok(success);
     }
@@ -144,6 +153,33 @@ public class RFIDCardController {
             @Parameter(description = "管理员ID") 
             @RequestParam Integer adminId) {
         boolean success = rfidCardService.extendCardExpiration(cardId, newExpirationTime, adminId);
+        return ResponseEntity.ok(success);
+    }
+
+    @GetMapping("/stats/status")
+    @Operation(summary = "获取各状态卡片数量统计")
+    public ResponseEntity<List<Map<String, Object>>> getStatusStatistics() {
+        List<Map<String, Object>> stats = rfidCardService.getStatusStatistics();
+        return ResponseEntity.ok(stats);
+    }
+
+    @GetMapping("/near-expiration")
+    @Operation(summary = "获取即将过期的卡片")
+    public ResponseEntity<List<RFIDCard>> getNearExpirationCards() {
+        List<RFIDCard> cards = rfidCardService.getNearExpirationCards();
+        return ResponseEntity.ok(cards);
+    }
+
+    @PutMapping("/batch-status")
+    @Operation(summary = "批量更新卡片状态")
+    public ResponseEntity<Boolean> batchUpdateStatus(
+            @Parameter(description = "卡片ID列表") 
+            @RequestBody List<Integer> cardIds,
+            @Parameter(description = "新状态") 
+            @RequestParam String status,
+            @Parameter(description = "管理员ID") 
+            @RequestParam Integer adminId) {
+        boolean success = rfidCardService.batchUpdateStatus(cardIds, status, adminId);
         return ResponseEntity.ok(success);
     }
 }

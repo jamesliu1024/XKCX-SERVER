@@ -25,7 +25,7 @@ import java.util.List;
  */
 @RestController
 @RequestMapping("/prediction")
-@Tag(name = "预测管理", description = "人流量预测数据管理相关接口")
+@Tag(name = "Prediction", description = "人流量预测数据")
 public class PredictionController {
 
     @Autowired
@@ -114,5 +114,38 @@ public class PredictionController {
         
         Page<Prediction> predictions = predictionService.page(page, queryWrapper);
         return ResponseEntity.ok(predictions);
+    }
+
+    @GetMapping("/accuracy/average")
+    @Operation(summary = "获取指定时间段的平均预测准确度")
+    public ResponseEntity<Double> getAverageAccuracy(
+            @Parameter(description = "开始日期 (yyyy-MM-dd)") 
+            @RequestParam @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate startDate,
+            @Parameter(description = "结束日期 (yyyy-MM-dd)") 
+            @RequestParam @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate endDate) {
+        Double avgAccuracy = predictionService.getAverageAccuracy(startDate, endDate);
+        return ResponseEntity.ok(avgAccuracy);
+    }
+
+    @GetMapping("/model/{version}")
+    @Operation(summary = "获取指定模型版本的预测数据")
+    public ResponseEntity<List<Prediction>> getPredictionsByModel(
+            @Parameter(description = "模型版本") 
+            @PathVariable String version) {
+        List<Prediction> predictions = predictionService.getPredictionsByModelVersion(version);
+        return ResponseEntity.ok(predictions);
+    }
+
+    @PutMapping("/{id}/accuracy")
+    @Operation(summary = "更新预测准确度和置信度")
+    public ResponseEntity<Void> updateAccuracy(
+            @Parameter(description = "预测记录ID") 
+            @PathVariable Integer id,
+            @Parameter(description = "准确度") 
+            @RequestParam Double accuracy,
+            @Parameter(description = "置信度") 
+            @RequestParam Double confidence) {
+        predictionService.updatePredictionAccuracy(id, accuracy, confidence);
+        return ResponseEntity.ok().build();
     }
 }

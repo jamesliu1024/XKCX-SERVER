@@ -44,4 +44,11 @@ public interface PredictionService extends IService<Prediction> {
      * @return 分页预测数据
      */
     Page<Prediction> getPredictionPage(Integer pageNum, Integer pageSize, LocalDate startDate, LocalDate endDate);
+    
+    // 新增方法
+    Double getAverageAccuracy(LocalDate startDate, LocalDate endDate);
+    
+    List<Prediction> getPredictionsByModelVersion(String modelVersion);
+    
+    void updatePredictionAccuracy(Integer predictionId, Double accuracy, Double confidence);
 }

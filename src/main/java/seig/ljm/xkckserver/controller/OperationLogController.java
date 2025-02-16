@@ -16,7 +16,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/operationLog")
-@Tag(name = "操作日志管理接口")
+@Tag(name = "OperationLog", description = "操作日志")
 public class OperationLogController {
 
     @Autowired

@@ -40,6 +40,7 @@ CREATE TABLE Reservation (
     host_confirm ENUM('pending', 'confirmed', 'rejected') DEFAULT 'pending', -- 被访人确认状态
     status ENUM('pending', 'confirmed', 'used', 'canceled') DEFAULT 'pending', -- 预约处理状态
     create_time DATETIME DEFAULT CURRENT_TIMESTAMP,       -- 预约创建时间
+    update_time DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP, -- 预约更新时间
     FOREIGN KEY (visitor_id) REFERENCES Visitor(visitor_id), -- 外键，关联访客表
     INDEX idx_time (start_time, end_time)                  -- 索引，加速时间段查询
 );
@@ -47,16 +48,19 @@ CREATE TABLE Reservation (
 -- RFID 卡片表：记录发放给访客的门禁卡信息，对应预约记录
 CREATE TABLE RFIDCard (
     card_id INT PRIMARY KEY AUTO_INCREMENT,              -- 卡片ID，自增长主键
-    uid VARCHAR(50) UNIQUE NOT NULL,                      -- RFID 卡物理 UID，唯一标识
-    issue_time DATETIME DEFAULT CURRENT_TIMESTAMP,        -- 发卡时间
-    return_time DATETIME DEFAULT NULL,                    -- 回收时间（如卡片回收时记录）
+    uid VARCHAR(50) UNIQUE NOT NULL,                     -- RFID 卡物理 UID，唯一标识
+    issue_time DATETIME DEFAULT CURRENT_TIMESTAMP,       -- 发卡时间
+    return_time DATETIME DEFAULT NULL,                   -- 回收时间（如卡片回收时记录）
+    expiration_time DATETIME NOT NULL,                   -- 卡片失效时间（一般与预约结束时间一致）
     status ENUM('available', 'issued', 'lost', 'deactivated') DEFAULT 'available', -- 卡片状态
-    expiration_time DATETIME,                             -- 卡片失效时间（与预约结束时间保持一致）
     update_time DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP, -- 更新时间
-    reservation_id INT,                                   -- 关联的预约记录ID
-    last_admin_id INT NOT NULL,                           -- 最后操作管理员的 ID
-    remarks VARCHAR(255),                                 -- 备注信息
-    FOREIGN KEY (reservation_id) REFERENCES Reservation(reservation_id) -- 外键，关联预约表
+    reservation_id INT,                                  -- 关联的预约记录ID
+    last_admin_id INT NOT NULL,                         -- 最后操作管理员的 ID
+    remarks VARCHAR(255),                               -- 备注信息
+    FOREIGN KEY (reservation_id) REFERENCES Reservation(reservation_id), -- 外键，关联预约表
+    INDEX idx_uid (uid),                                -- 索引，加速UID查询
+    INDEX idx_status (status),                          -- 索引，加速状态查询
+    INDEX idx_expiration (expiration_time)              -- 索引，加速有效期查询
 );
 
 -- 进出记录表：记录访客在校园各门禁设备刷卡进出情况
@@ -86,7 +90,10 @@ CREATE TABLE Prediction (
     prediction_id INT PRIMARY KEY AUTO_INCREMENT,        -- 预测记录ID，自增长主键
     predict_date DATE NOT NULL,                          -- 预测日期
     predicted_count INT NOT NULL,                        -- 预测总人流量
-    generate_time DATETIME DEFAULT CURRENT_TIMESTAMP,      -- 生成时间
+    accuracy DECIMAL(5,2),                               -- 预测准确度（百分比）
+    confidence DECIMAL(5,2),                             -- 预测置信度（百分比）
+    model_version VARCHAR(50),                           -- 预测模型版本
+    generate_time DATETIME DEFAULT CURRENT_TIMESTAMP,     -- 生成时间
     INDEX idx_predict_date (predict_date)                -- 索引，加速查询
 );
 
@@ -131,24 +138,89 @@ VALUES
 ('行政楼大厅', '192.168.1.105', 'online', 'management', 'RFID卡发放设备'),
 ('实验楼南门', '192.168.1.106', 'offline', 'facility_gate', '实验楼主入口门禁');
 
--- 插入预约记录
-INSERT INTO Reservation (visitor_id, start_time, end_time, host_confirm, status)
+-- 插入预约记录：为每条记录添加明确的创建时间和更新时间
+INSERT INTO Reservation (visitor_id, start_time, end_time, host_confirm, status, create_time, update_time)
 VALUES 
-(1, '2024-12-20 14:00:00', '2024-12-20 16:00:00', 'confirmed', 'confirmed'),  -- 张三预约校园正门
-(3, '2024-12-21 10:00:00', '2024-12-21 12:00:00', 'confirmed', 'confirmed'),  -- 王五预约校园西门
-(2, '2024-12-22 09:00:00', '2024-12-22 11:00:00', 'pending', 'pending'),       -- 李四预约校园正门（待确认）
-(5, '2025-01-15 09:00:00', '2025-01-15 17:00:00', 'confirmed', 'confirmed'),  -- 孙七预约校园正门
-(6, '2025-01-20 10:00:00', '2025-01-20 18:00:00', 'confirmed', 'confirmed');  -- 周八预约校园西门
+(1, '2024-12-20 14:00:00', '2024-12-20 16:00:00', 'confirmed', 'confirmed', 
+    '2024-12-19 10:00:00', '2024-12-20 13:05:00'),  -- 张三预约校园正门（更新时间为审批时间）
+(3, '2024-12-21 10:00:00', '2024-12-21 12:00:00', 'confirmed', 'confirmed', 
+    '2024-12-20 09:00:00', '2024-12-21 09:35:00'),  -- 王五预约校园西门（更新时间为审批时间）
+(2, '2024-12-22 09:00:00', '2024-12-22 11:00:00', 'pending', 'pending', 
+    '2024-12-21 15:00:00', '2024-12-21 15:00:00'),  -- 李四预约校园正门（待确认）
+(5, '2025-01-15 09:00:00', '2025-01-15 17:00:00', 'confirmed', 'confirmed', 
+    '2025-01-14 14:00:00', '2025-01-15 08:55:00'),  -- 孙七预约校园正门（更新时间为审批时间）
+(6, '2025-01-20 10:00:00', '2025-01-20 18:00:00', 'confirmed', 'confirmed', 
+    '2025-01-19 11:00:00', '2025-01-20 09:55:00');  -- 周八预约校园西门（更新时间为审批时间）
 
--- 插入RFID卡
-INSERT INTO RFIDCard (uid, status, expiration_time, reservation_id, last_admin_id, remarks)
+-- 插入RFID卡：为每张卡添加详细的发卡、失效时间和备注信息
+INSERT INTO RFIDCard (uid, issue_time, return_time, expiration_time, status, reservation_id, last_admin_id, remarks, update_time)
 VALUES 
-('RFID_001', 'issued', '2024-12-20 23:59:59', 1, 1, '发放给张三'),  -- 绑定到张三的预约
-('RFID_002', 'available', '2025-12-31 23:59:59', NULL, 1, '未发放'),  -- 未绑定
-('RFID_003', 'issued', '2024-12-21 23:59:59', 2, 1, '发放给王五'),  -- 绑定到王五的预约
-('RFID_004', 'lost', '2025-12-31 23:59:59', NULL, 1, '卡片丢失'),   -- 丢失卡片
-('RFID_005', 'issued', '2025-01-15 23:59:59', 4, 1, '发放给孙七'),  -- 绑定到孙七的预约
-('RFID_006', 'issued', '2025-01-20 23:59:59', 5, 1, '发放给周八');  -- 绑定到周八的预约
+(
+    'RFID_001',                                         -- 张三的卡
+    '2024-12-20 13:00:00',                             -- 发卡时间（对应操作日志时间）
+    NULL,                                               -- 未归还
+    '2024-12-20 16:00:00',                             -- 失效时间（与预约结束时间一致）
+    'issued',                                           -- 已发放状态
+    1,                                                  -- 关联张三的预约ID
+    1,                                                  -- 操作管理员ID
+    '发放给张三，用于业务洽谈访问',                      -- 详细备注
+    '2024-12-20 13:00:00'                              -- 最后更新时间
+),
+(
+    'RFID_002',                                         -- 备用卡
+    '2024-12-01 09:00:00',                             -- 发卡时间
+    NULL,                                               -- 未使用
+    '2025-12-31 23:59:59',                             -- 备用卡长期有效期
+    'available',                                        -- 可用状态
+    NULL,                                               -- 未关联预约
+    1,                                                  -- 操作管理员ID
+    '备用卡，用于紧急情况',                              -- 详细备注
+    '2024-12-01 09:00:00'                              -- 最后更新时间
+),
+(
+    'RFID_003',                                         -- 王五的卡
+    '2024-12-21 09:30:00',                             -- 发卡时间
+    '2024-12-21 12:05:00',                             -- 已归还
+    '2024-12-21 12:00:00',                             -- 失效时间
+    'deactivated',                                      -- 已停用状态
+    2,                                                  -- 关联王五的预约ID
+    1,                                                  -- 操作管理员ID
+    '发放给王五，用于参观校园，已按时归还',               -- 详细备注
+    '2024-12-21 12:05:00'                              -- 最后更新时间
+),
+(
+    'RFID_004',                                         -- 丢失的卡
+    '2024-11-01 10:00:00',                             -- 发卡时间
+    NULL,                                               -- 未归还
+    '2024-11-30 23:59:59',                             -- 原定失效时间
+    'lost',                                             -- 丢失状态
+    NULL,                                               -- 无关联预约
+    1,                                                  -- 操作管理员ID
+    '2024-11-15报失，已列入黑名单',                      -- 详细备注
+    '2024-11-15 14:30:00'                              -- 报失时间
+),
+(
+    'RFID_005',                                         -- 孙七的卡
+    '2025-01-15 08:50:00',                             -- 发卡时间
+    NULL,                                               -- 未归还
+    '2025-01-15 17:00:00',                             -- 失效时间
+    'issued',                                           -- 已发放状态
+    4,                                                  -- 关联孙七的预约ID
+    1,                                                  -- 操作管理员ID
+    '发放给孙七，用于面试',                              -- 详细备注
+    '2025-01-15 08:50:00'                              -- 最后更新时间
+),
+(
+    'RFID_006',                                         -- 周八的卡
+    '2025-01-20 09:50:00',                             -- 发卡时间
+    NULL,                                               -- 未归还
+    '2025-01-20 18:00:00',                             -- 失效时间
+    'issued',                                           -- 已发放状态
+    5,                                                  -- 关联周八的预约ID
+    1,                                                  -- 操作管理员ID
+    '发放给周八，用于参观实验室',                         -- 详细备注
+    '2025-01-20 09:50:00'                              -- 最后更新时间
+);
 
 -- 插入进出记录：记录访客刷卡进出操作，并对 access_time 明确指定时间
 INSERT INTO AccessLog (visitor_id, device_id, access_time, access_type, result, reason)
@@ -198,12 +270,13 @@ VALUES
 (1, 'APPROVE_RESERVATION', 5, '2025-01-20 09:55:00', '{"reservation_id": 5, "status": "confirmed"}');  -- 批准周八的预约
 
 -- 插入预测数据：为每天生成预测数据时指定具体生成时间
-INSERT INTO Prediction (predict_date, predicted_count, generate_time)
+INSERT INTO Prediction (predict_date, predicted_count, accuracy, confidence, model_version, generate_time)
 VALUES 
-('2024-12-20', 120, '2024-12-19 18:00:00'),  -- 2024-12-20预测数据
-('2024-12-21', 80, '2024-12-20 18:00:00'),   -- 2024-12-21预测数据
-('2025-01-15', 150, '2025-01-14 18:00:00'),  -- 2025-01-15预测数据
-('2025-01-20', 200, '2025-01-19 18:00:00');  -- 2025-01-20预测数据
+('2024-12-20', 120, 95.5, 92.3, 'MLv1.2.0', '2024-12-19 18:00:00'),  -- 2024-12-20预测数据
+('2024-12-21', 80, 93.8, 90.5, 'MLv1.2.0', '2024-12-20 18:00:00'),   -- 2024-12-21预测数据
+('2024-12-22', 95, 94.2, 91.7, 'MLv1.2.0', '2024-12-21 18:00:00'),   -- 2024-12-22预测数据
+('2025-01-15', 150, 92.5, 89.8, 'MLv1.2.1', '2025-01-14 18:00:00'),  -- 2025-01-15预测数据
+('2025-01-20', 200, 91.8, 88.9, 'MLv1.2.1', '2025-01-19 18:00:00');  -- 2025-01-20预测数据
 
 -- 插入消息日志：为每条消息日志指定具体消息接收时间
 INSERT INTO MessageLog (device_id, payload, receive_time, status)

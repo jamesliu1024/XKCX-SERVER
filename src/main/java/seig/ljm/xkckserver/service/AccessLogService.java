@@ -3,6 +3,7 @@ package seig.ljm.xkckserver.service;
 import seig.ljm.xkckserver.entity.AccessLog;
 import com.baomidou.mybatisplus.extension.service.IService;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
@@ -30,12 +31,12 @@ public interface AccessLogService extends IService<AccessLog> {
     /**
      * 获取每日进出统计
      */
-    List<Map<String, Object>> getDailyStats(LocalDateTime startDate, LocalDateTime endDate);
+    List<Map<String, Object>> getDailyStats(LocalDate startDate, LocalDate endDate);
 
     /**
      * 获取访问高峰时段
      */
-    List<Map<String, Object>> getPeakHours(LocalDateTime date);
+    List<Map<String, Object>> getPeakHours(LocalDate date);
 
     /**
      * 获取异常访问记录

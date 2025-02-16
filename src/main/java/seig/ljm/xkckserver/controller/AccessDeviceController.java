@@ -4,6 +4,8 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -20,6 +22,7 @@ import java.util.List;
  * @author ljm
  * @since 2025-02-14
  */
+@Tag(name = "AccessDevice", description = "设备管理")
 @RestController
 @RequestMapping("/accessDevice")
 public class AccessDeviceController {
@@ -41,8 +44,8 @@ public class AccessDeviceController {
             @ApiResponse(responseCode = "404", description = "设备不存在")
     })
     @GetMapping("/{id}")
-    public String get(@Parameter(description = "设备ID") @PathVariable("id") Integer id) {
-        return accessDeviceService.getById(id).toString();
+    public ResponseEntity<AccessDevice> get(@Parameter(description = "设备ID") @PathVariable("id") Integer id) {
+        return ResponseEntity.ok(accessDeviceService.getById(id));
     }
 
     @Operation(summary = "获取所有设备列表")

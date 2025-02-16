@@ -4,6 +4,8 @@ import seig.ljm.xkckserver.entity.OperationLog;
 import seig.ljm.xkckserver.mapper.OperationLogMapper;
 import seig.ljm.xkckserver.service.OperationLogService;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -19,6 +21,12 @@ import java.util.List;
 @Service
 public class OperationLogServiceImpl extends ServiceImpl<OperationLogMapper, OperationLog> implements OperationLogService {
     
+    private OperationLogMapper operationLogMapper;
+    @Autowired
+    public OperationLogServiceImpl(OperationLogMapper operationLogMapper) {
+        this.operationLogMapper = operationLogMapper;
+    }
+
     @Override
     public List<OperationLog> getByOperator(Integer operatorId, LocalDateTime startTime, LocalDateTime endTime) {
         return baseMapper.getByOperator(operatorId, startTime, endTime);

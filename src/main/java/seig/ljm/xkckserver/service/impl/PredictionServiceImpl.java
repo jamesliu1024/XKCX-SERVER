@@ -6,6 +6,8 @@ import seig.ljm.xkckserver.entity.Prediction;
 import seig.ljm.xkckserver.mapper.PredictionMapper;
 import seig.ljm.xkckserver.service.PredictionService;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
@@ -21,6 +23,11 @@ import java.util.List;
  */
 @Service
 public class PredictionServiceImpl extends ServiceImpl<PredictionMapper, Prediction> implements PredictionService {
+    private PredictionMapper predictionMapper;
+    @Autowired
+    public PredictionServiceImpl(PredictionMapper predictionMapper) {
+        this.predictionMapper = predictionMapper;
+    }
 
     @Override
     public Prediction getPredictionByDate(LocalDate date) {
@@ -48,5 +55,40 @@ public class PredictionServiceImpl extends ServiceImpl<PredictionMapper, Predict
         queryWrapper.orderByDesc("predict_date");
         
         return page(page, queryWrapper);
+    }
+
+    @Override
+    public Double getAverageAccuracy(LocalDate startDate, LocalDate endDate) {
+        QueryWrapper<Prediction> queryWrapper = new QueryWrapper<>();
+        queryWrapper.between("predict_date", startDate, endDate)
+                   .isNotNull("accuracy");
+        List<Prediction> predictions = list(queryWrapper);
+        
+        if (predictions.isEmpty()) {
+            return 0.0;
+        }
+        
+        double sum = predictions.stream()
+                .mapToDouble(Prediction::getAccuracy)
+                .sum();
+        return sum / predictions.size();
+    }
+
+    @Override
+    public List<Prediction> getPredictionsByModelVersion(String modelVersion) {
+        QueryWrapper<Prediction> queryWrapper = new QueryWrapper<>();
+        queryWrapper.eq("model_version", modelVersion)
+                   .orderByDesc("predict_date");
+        return list(queryWrapper);
+    }
+
+    @Override
+    public void updatePredictionAccuracy(Integer predictionId, Double accuracy, Double confidence) {
+        Prediction prediction = getById(predictionId);
+        if (prediction != null) {
+            prediction.setAccuracy(accuracy);
+            prediction.setConfidence(confidence);
+            updateById(prediction);
+        }
     }
 }

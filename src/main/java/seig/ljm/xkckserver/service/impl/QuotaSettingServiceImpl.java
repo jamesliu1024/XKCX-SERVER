@@ -15,8 +15,11 @@ import java.util.List;
 @Service
 public class QuotaSettingServiceImpl extends ServiceImpl<QuotaSettingMapper, QuotaSetting> implements QuotaSettingService {
 
-    @Autowired
     private QuotaSettingMapper quotaSettingMapper;
+    @Autowired
+    public QuotaSettingServiceImpl(QuotaSettingMapper quotaSettingMapper) {
+        this.quotaSettingMapper = quotaSettingMapper;
+    }
 
     @Override
     public QuotaSetting getQuotaByDate(LocalDate date) {

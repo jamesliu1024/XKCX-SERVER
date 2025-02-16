@@ -11,6 +11,7 @@ import seig.ljm.xkckserver.entity.AccessLog;
 import seig.ljm.xkckserver.service.AccessLogService;
 
 import java.time.LocalDateTime;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
 
@@ -22,7 +23,7 @@ import java.util.Map;
  * @author ljm
  * @since 2025-02-14
  */
-@Tag(name = "进出记录管理", description = "管理校园门禁进出记录")
+@Tag(name = "AccessLog", description = "进出记录")
 @RestController
 @RequestMapping("/accessLog")
 public class AccessLogController {
@@ -67,8 +68,8 @@ public class AccessLogController {
     @Operation(summary = "获取每日进出统计")
     @GetMapping("/stats/daily")
     public Result<List<Map<String, Object>>> getDailyStats(
-            @RequestParam @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDateTime startDate,
-            @RequestParam @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDateTime endDate) {
+            @RequestParam @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate startDate,
+            @RequestParam @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate endDate) {
         
         List<Map<String, Object>> stats = accessLogService.getDailyStats(startDate, endDate);
         return Result.success(stats);
@@ -77,7 +78,7 @@ public class AccessLogController {
     @Operation(summary = "获取访问高峰时段")
     @GetMapping("/stats/peak-hours")
     public Result<List<Map<String, Object>>> getPeakHours(
-            @RequestParam @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDateTime date) {
+            @RequestParam @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate date) {
         
         List<Map<String, Object>> peakHours = accessLogService.getPeakHours(date);
         return Result.success(peakHours);

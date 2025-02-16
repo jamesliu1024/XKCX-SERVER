@@ -14,8 +14,11 @@ import java.time.LocalDateTime;
 @Service
 public class ReservationServiceImpl extends ServiceImpl<ReservationMapper, Reservation> implements ReservationService {
 
-    @Autowired
     private ReservationMapper reservationMapper;
+    @Autowired
+    public ReservationServiceImpl(ReservationMapper reservationMapper) {
+        this.reservationMapper = reservationMapper;
+    }
 
     @Override
     public Page<Reservation> getVisitorReservations(Integer visitorId, Integer pageNum, Integer pageSize) {
@@ -45,7 +48,9 @@ public class ReservationServiceImpl extends ServiceImpl<ReservationMapper, Reser
 
     @Override
     public boolean createReservation(Reservation reservation) {
-        reservation.setCreateTime(LocalDateTime.now());
+        LocalDateTime now = LocalDateTime.now();
+        reservation.setCreateTime(now);
+        reservation.setUpdateTime(now);
         reservation.setStatus("pending");
         return save(reservation);
     }
@@ -55,6 +60,7 @@ public class ReservationServiceImpl extends ServiceImpl<ReservationMapper, Reser
         Reservation reservation = new Reservation();
         reservation.setReservationId(reservationId);
         reservation.setStatus("canceled");
+        reservation.setUpdateTime(LocalDateTime.now());
         return updateById(reservation);
     }
 
@@ -64,6 +70,7 @@ public class ReservationServiceImpl extends ServiceImpl<ReservationMapper, Reser
         reservation.setReservationId(reservationId);
         reservation.setHostConfirm("confirmed");
         reservation.setStatus("confirmed");
+        reservation.setUpdateTime(LocalDateTime.now());
         return updateById(reservation);
     }
 
@@ -73,6 +80,7 @@ public class ReservationServiceImpl extends ServiceImpl<ReservationMapper, Reser
         reservation.setReservationId(reservationId);
         reservation.setHostConfirm("rejected");
         reservation.setStatus("rejected");
+        reservation.setUpdateTime(LocalDateTime.now());
         return updateById(reservation);
     }
 }

@@ -17,7 +17,7 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/visitor")
-@Tag(name = "访客管理", description = "访客信息相关接口")
+@Tag(name = "Visitor", description = "访客信息")
 public class VisitorController {
 
     @Autowired

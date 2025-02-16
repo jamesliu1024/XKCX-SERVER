@@ -39,8 +39,12 @@ public class Reservation implements Serializable {
     @TableField("visitor_id")
     private Integer visitorId;
 
-    @Schema(name = "deviceId", description = "")
-    @TableField("start_time")
+//    @Schema(name = "deviceId", description = "")
+//    @TableField("device_id")  // 修正字段名
+//    private Integer deviceId;  // 修正类型为Integer
+
+    @Schema(name = "startTime", description = "")
+    @TableField("start_time")  // 添加正确的startTime字段
     private LocalDateTime startTime;
 
     @Schema(name = "endTime", description = "")
@@ -51,11 +55,15 @@ public class Reservation implements Serializable {
     @TableField("host_confirm")
     private String hostConfirm;
 
-    @Schema(name = "hostId", description = "")
+    @Schema(name = "status", description = "")
     @TableField("status")
     private String status;
 
     @Schema(name = "createTime", description = "")
     @TableField("create_time")
     private LocalDateTime createTime;
+
+    @Schema(name = "updateTime", description = "预约更新时间")
+    @TableField("update_time")
+    private LocalDateTime updateTime;
 }

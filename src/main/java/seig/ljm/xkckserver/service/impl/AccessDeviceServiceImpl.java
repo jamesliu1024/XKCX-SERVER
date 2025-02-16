@@ -1,6 +1,10 @@
 package seig.ljm.xkckserver.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.autoconfigure.AutoConfigureOrder;
+import org.springframework.core.annotation.AliasFor;
 import org.springframework.stereotype.Service;
 import seig.ljm.xkckserver.entity.AccessDevice;
 import seig.ljm.xkckserver.mapper.AccessDeviceMapper;
@@ -21,6 +25,12 @@ import java.util.Map;
  */
 @Service
 public class AccessDeviceServiceImpl extends ServiceImpl<AccessDeviceMapper, AccessDevice> implements AccessDeviceService {
+
+    private AccessDeviceMapper accessDeviceMapper;
+    @Autowired
+    public AccessDeviceServiceImpl(AccessDeviceMapper accessDeviceMapper) {
+        this.accessDeviceMapper = accessDeviceMapper;
+    }
 
     @Override
     public Map<String, Object> getDeviceUsageStats(Integer deviceId) {

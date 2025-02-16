@@ -12,13 +12,14 @@ import seig.ljm.xkckserver.common.api.ApiResult;
 import seig.ljm.xkckserver.entity.MessageLog;
 import seig.ljm.xkckserver.service.MessageLogService;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 
 @RestController
 @RequestMapping("/messageLog")
-@Tag(name = "设备通信日志管理接口")
+@Tag(name = "MessageLog", description = "设备通信日志相")
 public class MessageLogController {
 
     @Autowired
@@ -79,8 +80,8 @@ public class MessageLogController {
     @GetMapping("/stats/daily")
     @Operation(summary = "获取每日通信统计")
     public ApiResult<List<Map<String, Object>>> getDailyStats(
-            @RequestParam @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDateTime startDate,
-            @RequestParam @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDateTime endDate) {
+            @RequestParam @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate startDate,
+            @RequestParam @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate endDate) {
         List<Map<String, Object>> stats = messageLogService.getDailyStats(startDate, endDate);
         return ApiResult.success(stats);
     }

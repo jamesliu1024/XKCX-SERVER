@@ -1,16 +1,25 @@
 package seig.ljm.xkckserver.service.impl;
 
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import seig.ljm.xkckserver.entity.AccessLog;
 import seig.ljm.xkckserver.mapper.AccessLogMapper;
 import seig.ljm.xkckserver.service.AccessLogService;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
 
 @Service
 public class AccessLogServiceImpl extends ServiceImpl<AccessLogMapper, AccessLog> implements AccessLogService {
+
+    private AccessLogMapper accessLogMapper;
+    @Autowired
+    public AccessLogServiceImpl(AccessLogMapper accessLogMapper) {
+        this.accessLogMapper = accessLogMapper;
+    }
 
     @Override
     public List<AccessLog> queryLogs(Integer visitorId, Integer deviceId, String accessType,
@@ -32,12 +41,12 @@ public class AccessLogServiceImpl extends ServiceImpl<AccessLogMapper, AccessLog
     }
 
     @Override
-    public List<Map<String, Object>> getDailyStats(LocalDateTime startDate, LocalDateTime endDate) {
+    public List<Map<String, Object>> getDailyStats(LocalDate startDate, LocalDate endDate) {
         return baseMapper.getDailyStats(startDate, endDate);
     }
 
     @Override
-    public List<Map<String, Object>> getPeakHours(LocalDateTime date) {
+    public List<Map<String, Object>> getPeakHours(LocalDate date) {
         return baseMapper.getPeakHours(date);
     }
 
