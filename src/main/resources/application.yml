@@ -41,3 +41,16 @@ logging:
 
 server:
   port: 8123
+
+# MQTT Configuration
+mqtt:
+  broker:
+    url: tcp://localhost:50005
+  client:
+    id: xkck-server
+  username: admin
+  password: public
+  topics:
+    - xkck/device/+/status
+    - xkck/device/+/response
+    - xkck/device/+/heartbeat

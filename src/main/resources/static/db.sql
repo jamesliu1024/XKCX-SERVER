@@ -128,6 +128,11 @@ VALUES
 ('孙七', '13800138005', 'id_card', '110101199003031234', '面试', '人事处', '赵主任', 'approved', '2025-01-15 23:59:59'),
 ('周八', '13800138006', 'passport', 'E87654321', '参观实验室', '实验室', '陈教授', 'approved', '2025-01-20 23:59:59');
 
+-- 插入服务器设备
+INSERT INTO AccessDevice (device_id, location, ip_address, status, device_type, description)
+VALUES
+(-1, '服务器', '0.0.0.0', 'online', 'management', '服务器管理设备');
+
 -- 插入门禁设备
 INSERT INTO AccessDevice (location, ip_address, status, device_type, description)
 VALUES 
