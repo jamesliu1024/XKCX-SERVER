@@ -1,4 +1,4 @@
-package seig.ljm.xkckserver.config;
+package seig.ljm.xkckserver.common.config;
 
 import io.swagger.v3.oas.models.OpenAPI;
 import io.swagger.v3.oas.models.info.Info;

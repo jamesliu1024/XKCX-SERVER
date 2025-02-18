@@ -1,14 +1,11 @@
 package seig.ljm.xkckserver.mapper;
 
-import seig.ljm.xkckserver.entity.Visitor;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
-import org.apache.ibatis.annotations.Param;
-import org.apache.ibatis.annotations.Select;
-import org.apache.ibatis.annotations.Results;
-import org.apache.ibatis.annotations.Result;
+import org.apache.ibatis.annotations.*;
+import seig.ljm.xkckserver.entity.Visitor;
+
+import java.time.ZonedDateTime;
 import java.util.List;
-import java.util.Map;
-import java.time.LocalDateTime;
 
 /**
  * <p>
@@ -16,44 +13,57 @@ import java.time.LocalDateTime;
  * </p>
  *
  * @author ljm
- * @since 2025-02-14
+ * @since 2025-02-18
  */
+@Mapper
 public interface VisitorMapper extends BaseMapper<Visitor> {
-    
-    @Results({
-        @Result(id = true, column = "visitor_id", property = "visitorId"),
-        @Result(column = "name", property = "name"),
-        @Result(column = "phone", property = "phone"),
-        @Result(column = "wechat_openid", property = "wechatOpenid"),
-        @Result(column = "id_type", property = "idType"),
-        @Result(column = "id_number", property = "idNumber"),
-        @Result(column = "reason", property = "reason"),
-        @Result(column = "host_department", property = "hostDepartment"),
-        @Result(column = "host_name", property = "hostName"),
-        @Result(column = "status", property = "status"),
-        @Result(column = "expire_time", property = "expireTime"),
-        @Result(column = "create_time", property = "createTime")
-    })
-    @Select("SELECT * FROM Visitor WHERE wechat_openid = #{openId}")
-    Visitor selectByOpenId(@Param("openId") String openId);
-    
-    @Select("SELECT * FROM Visitor WHERE id_number = #{idNumber}")
+
+    /**
+     * 根据手机号查询访客
+     */
+    @Select("SELECT * FROM visitor WHERE phone = #{phone} AND hidden = false")
+    Visitor selectByPhone(@Param("phone") String phone);
+
+    /**
+     * 根据证件号码查询访客
+     */
+    @Select("SELECT * FROM visitor WHERE id_number = #{idNumber} AND hidden = false")
     Visitor selectByIdNumber(@Param("idNumber") String idNumber);
-    
-    @Select("SELECT * FROM Visitor WHERE host_department = #{department} ORDER BY create_time DESC")
-    List<Visitor> selectByHostDepartment(@Param("department") String department);
-    
-    @Select("SELECT * FROM Visitor WHERE host_name = #{hostName} ORDER BY create_time DESC")
-    List<Visitor> selectByHostName(@Param("hostName") String hostName);
-    
-    @Select("SELECT " +
-            "COUNT(*) as total_visitors, " +
-            "COUNT(CASE WHEN status = 'pending' THEN 1 END) as pending_count, " +
-            "COUNT(CASE WHEN status = 'approved' THEN 1 END) as approved_count, " +
-            "COUNT(CASE WHEN status = 'expired' THEN 1 END) as expired_count " +
-            "FROM Visitor " +
-            "WHERE create_time BETWEEN #{startTime} AND #{endTime}")
-    Map<String, Object> selectVisitorStats(@Param("startTime") LocalDateTime startTime, 
-                                         @Param("endTime") LocalDateTime endTime);
+
+    /**
+     * 根据微信OpenID查询访客
+     */
+    @Select("SELECT * FROM visitor WHERE wechat_openid = #{openId} AND hidden = false")
+    Visitor selectByWechatOpenId(@Param("openId") String openId);
+
+    /**
+     * 更新访客状态
+     */
+    @Update("UPDATE visitor SET account_status = #{status}, update_time = #{updateTime} WHERE visitor_id = #{visitorId}")
+    int updateAccountStatus(@Param("visitorId") Integer visitorId, @Param("status") String status, @Param("updateTime") ZonedDateTime updateTime);
+
+    /**
+     * 更新最后登录时间
+     */
+    @Update("UPDATE visitor SET last_login_time = #{loginTime} WHERE visitor_id = #{visitorId}")
+    int updateLastLoginTime(@Param("visitorId") Integer visitorId, @Param("loginTime") ZonedDateTime loginTime);
+
+    /**
+     * 软删除访客
+     */
+    @Update("UPDATE visitor SET hidden = true, update_time = #{updateTime} WHERE visitor_id = #{visitorId}")
+    int softDelete(@Param("visitorId") Integer visitorId, @Param("updateTime") ZonedDateTime updateTime);
+
+    /**
+     * 获取所有管理员
+     */
+    @Select("SELECT * FROM visitor WHERE role = 'admin' AND hidden = false")
+    List<Visitor> selectAllAdmins();
+
+    /**
+     * 获取所有黑名单用户
+     */
+    @Select("SELECT * FROM visitor WHERE account_status = 'blacklist' AND hidden = false")
+    List<Visitor> selectAllBlacklisted();
 }
 

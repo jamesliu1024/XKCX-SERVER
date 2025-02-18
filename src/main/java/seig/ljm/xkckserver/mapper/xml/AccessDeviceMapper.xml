@@ -7,29 +7,18 @@
         <id column="device_id" property="deviceId" />
         <result column="location" property="location" />
         <result column="ip_address" property="ipAddress" />
+        <result column="mac_address" property="macAddress" />
         <result column="status" property="status" />
         <result column="device_type" property="deviceType" />
+        <result column="last_heartbeat_time" property="lastHeartbeatTime" />
+        <result column="firmware_version" property="firmwareVersion" />
+        <result column="door_status" property="doorStatus" />
         <result column="description" property="description" />
     </resultMap>
 
     <!-- 通用查询结果列 -->
     <sql id="Base_Column_List">
-        device_id, location, ip_address, status, device_type, description
+        device_id, location, ip_address, mac_address, status, device_type, last_heartbeat_time, firmware_version, door_status, description
     </sql>
-
-    <!-- 获取设备使用统计 -->
-    <select id="getDeviceUsageStats" resultType="java.util.Map">
-        SELECT 
-            d.device_id,
-            COUNT(l.log_id) as totalAccess,
-            SUM(CASE WHEN l.result = 'allowed' THEN 1 ELSE 0 END) * 100.0 / COUNT(l.log_id) as successRate
-        FROM 
-            AccessDevice d
-            LEFT JOIN AccessLog l ON d.device_id = l.device_id
-        WHERE 
-            d.device_id = #{deviceId}
-        GROUP BY 
-            d.device_id
-    </select>
 
 </mapper>

@@ -1,4 +1,4 @@
-package seig.ljm.xkckserver.config;
+package seig.ljm.xkckserver.common.config;
 
 import org.eclipse.paho.client.mqttv3.MqttConnectOptions;
 import org.springframework.beans.factory.annotation.Value;

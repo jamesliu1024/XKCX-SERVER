@@ -7,33 +7,18 @@
         <id column="prediction_id" property="predictionId" />
         <result column="predict_date" property="predictDate" />
         <result column="predicted_count" property="predictedCount" />
+        <result column="accuracy" property="accuracy" />
+        <result column="actual_count" property="actualCount" />
+        <result column="confidence" property="confidence" />
+        <result column="factors" property="factors" />
+        <result column="model_version" property="modelVersion" />
         <result column="generate_time" property="generateTime" />
+        <result column="update_time" property="updateTime" />
     </resultMap>
 
     <!-- 通用查询结果列 -->
     <sql id="Base_Column_List">
-        prediction_id, predict_date, predicted_count, generate_time
+        prediction_id, predict_date, predicted_count, accuracy, actual_count, confidence, factors, model_version, generate_time, update_time
     </sql>
-
-    <!-- 获取指定日期范围内的预测数据统计 -->
-    <select id="selectPredictionStats" resultType="java.util.Map">
-        SELECT 
-            MAX(predicted_count) as max_count,
-            MIN(predicted_count) as min_count,
-            AVG(predicted_count) as avg_count,
-            COUNT(*) as total_records
-        FROM Prediction
-        WHERE predict_date BETWEEN #{startDate} AND #{endDate}
-    </select>
-
-    <!-- 获取最近的预测数据 -->
-    <select id="selectLatestPredictions" resultMap="BaseResultMap">
-        SELECT 
-            <include refid="Base_Column_List" />
-        FROM Prediction
-        WHERE predict_date >= #{currentDate}
-        ORDER BY predict_date
-        LIMIT #{limit}
-    </select>
 
 </mapper>

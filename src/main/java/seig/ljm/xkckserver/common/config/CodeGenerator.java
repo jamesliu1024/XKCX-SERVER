@@ -1,4 +1,4 @@
-package seig.ljm.xkckserver.config;
+package seig.ljm.xkckserver.common.config;
 
 import com.baomidou.mybatisplus.generator.FastAutoGenerator;
 import com.baomidou.mybatisplus.generator.engine.FreemarkerTemplateEngine;
@@ -12,7 +12,8 @@ public class CodeGenerator {
                 .globalConfig(builder -> builder
                         .author("ljm")
                         .outputDir(Paths.get(System.getProperty("user.dir")) + "/src/main/java")
-                        .enableSwagger()
+//                        .enableSwagger()
+                        .enableSpringdoc()
                         .commentDate("yyyy-MM-dd")
                 )
                 .packageConfig(builder -> builder

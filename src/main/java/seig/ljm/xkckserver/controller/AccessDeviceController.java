@@ -2,93 +2,78 @@ package seig.ljm.xkckserver.controller;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
-import io.swagger.v3.oas.annotations.responses.ApiResponse;
-import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
-
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import seig.ljm.xkckserver.common.ApiResult;
 import seig.ljm.xkckserver.entity.AccessDevice;
 import seig.ljm.xkckserver.service.AccessDeviceService;
 
 import java.util.List;
 
 /**
- * <p>
- *  前端控制器
- * </p>
+ * 门禁设备控制器
  *
  * @author ljm
- * @since 2025-02-14
+ * @since 2025-02-18
  */
-@Tag(name = "AccessDevice", description = "设备管理")
 @RestController
 @RequestMapping("/accessDevice")
+@Tag(name = "AccessDevice", description = "门禁设备")
 public class AccessDeviceController {
 
     private AccessDeviceService accessDeviceService;
     @Autowired
-    public AccessDeviceController(AccessDeviceService accessDeviceService) {
+    public AccessDeviceController(AccessDeviceService accessDeviceService){
         this.accessDeviceService = accessDeviceService;
     }
 
-    /**
-     * 根据id获取设备信息
-     * @param id 设备id
-     * @return 设备信息
-     */
-    @Operation(summary = "根据id获取设备信息")
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "获取成功"),
-            @ApiResponse(responseCode = "404", description = "设备不存在")
-    })
-    @GetMapping("/{id}")
-    public ResponseEntity<AccessDevice> get(@Parameter(description = "设备ID") @PathVariable("id") Integer id) {
-        return ResponseEntity.ok(accessDeviceService.getById(id));
+    @PostMapping
+    @Operation(summary = "添加门禁设备", description = "添加新的门禁设备到系统")
+    public ApiResult<AccessDevice> addDevice(@RequestBody AccessDevice device) {
+        return ApiResult.success(accessDeviceService.addDevice(device));
     }
 
-    @Operation(summary = "获取所有设备列表")
+    @PutMapping("/{deviceId}/status")
+    @Operation(summary = "修改设备状态", description = "修改指定设备的状态")
+    public ApiResult<Boolean> updateDeviceStatus(
+            @Parameter(description = "设备ID") @PathVariable Integer deviceId,
+            @Parameter(description = "设备状态") @RequestParam String status) {
+        return ApiResult.success(accessDeviceService.updateDeviceStatus(deviceId, status));
+    }
+
+    @PutMapping
+    @Operation(summary = "更新门禁设备", description = "更新门禁设备信息")
+    public ApiResult<AccessDevice> updateDevice(@RequestBody AccessDevice device) {
+        return ApiResult.success(accessDeviceService.updateDevice(device));
+    }
+
+    @GetMapping("/{deviceId}")
+    @Operation(summary = "获取门禁设备", description = "根据设备ID获取门禁设备信息")
+    public ApiResult<AccessDevice> getDevice(
+            @Parameter(description = "设备ID") @PathVariable Integer deviceId) {
+        return ApiResult.success(accessDeviceService.getById(deviceId));
+    }
+
     @GetMapping("/list")
-    public ResponseEntity<List<AccessDevice>> list() {
-        return ResponseEntity.ok(accessDeviceService.list());
+    @Operation(summary = "获取所有门禁设备", description = "获取系统中所有门禁设备的列表")
+    public ApiResult<List<AccessDevice>> listDevices() {
+        return ApiResult.success(accessDeviceService.list());
     }
 
-    @Operation(summary = "添加新设备")
-    @PostMapping("/add")
-    public ResponseEntity<Boolean> add(@RequestBody AccessDevice device) {
-        return ResponseEntity.ok(accessDeviceService.save(device));
+    @PutMapping("/{deviceId}/emergency")
+    @Operation(summary = "紧急控制", description = "对指定设备进行紧急控制操作")
+    public ApiResult<Boolean> emergencyControl(
+            @Parameter(description = "设备ID") @PathVariable Integer deviceId,
+            @Parameter(description = "控制动作：emergency_open或emergency_close") @RequestParam String action,
+            @Parameter(description = "操作原因") @RequestParam String reason) {
+        return ApiResult.success(accessDeviceService.emergencyControl(deviceId, action, reason));
     }
 
-    @Operation(summary = "更新设备信息")
-    @PutMapping("/update")
-    public ResponseEntity<Boolean> update(@RequestBody AccessDevice device) {
-        return ResponseEntity.ok(accessDeviceService.updateById(device));
+    @GetMapping("/{deviceId}/status")
+    @Operation(summary = "获取设备状态", description = "获取指定设备的当前状态信息")
+    public ApiResult<AccessDevice> getDeviceStatus(
+            @Parameter(description = "设备ID") @PathVariable Integer deviceId) {
+        return ApiResult.success(accessDeviceService.getDeviceStatus(deviceId));
     }
-
-    @Operation(summary = "删除设备")
-    @DeleteMapping("/{id}")
-    public ResponseEntity<Boolean> delete(@PathVariable Integer id) {
-        return ResponseEntity.ok(accessDeviceService.removeById(id));
-    }
-
-    @Operation(summary = "更新设备状态")
-    @PutMapping("/{id}/status/{status}")
-    public ResponseEntity<Boolean> updateStatus(
-            @PathVariable Integer id,
-            @PathVariable String status) {
-        AccessDevice device = new AccessDevice();
-        device.setDeviceId(id);
-        device.setStatus(status);
-        return ResponseEntity.ok(accessDeviceService.updateById(device));
-    }
-
-    @Operation(summary = "获取在线设备列表")
-    @GetMapping("/online")
-    public ResponseEntity<List<AccessDevice>> getOnlineDevices() {
-        return ResponseEntity.ok(accessDeviceService.lambdaQuery()
-                .eq(AccessDevice::getStatus, "online")
-                .list());
-    }
-
 }

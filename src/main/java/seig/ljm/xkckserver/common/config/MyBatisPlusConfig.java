@@ -1,4 +1,4 @@
-package seig.ljm.xkckserver.config;
+package seig.ljm.xkckserver.common.config;
 
 import org.mybatis.spring.annotation.MapperScan;
 import org.springframework.context.annotation.Configuration;

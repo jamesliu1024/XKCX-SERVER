@@ -1,64 +1,66 @@
 package seig.ljm.xkckserver.mapper;
 
-import seig.ljm.xkckserver.entity.MessageLog;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
-import org.apache.ibatis.annotations.Param;
-import org.apache.ibatis.annotations.Select;
+import org.apache.ibatis.annotations.*;
+import seig.ljm.xkckserver.entity.MessageLog;
 
-import java.time.LocalDate;
-import java.time.LocalDateTime;
+import java.time.ZonedDateTime;
 import java.util.List;
-import java.util.Map;
 
 /**
- * <p>
- *  Mapper 接口
- * </p>
+ * MQTT消息日志Mapper接口
  *
  * @author ljm
- * @since 2025-02-14
+ * @since 2025-02-18
  */
+@Mapper
 public interface MessageLogMapper extends BaseMapper<MessageLog> {
-    
-    /**
-     * 获取每日通信统计数据
-     */
-    @Select("SELECT " +
-            "DATE(receive_time) as date, " +
-            "COUNT(*) as totalMessages, " +
-            "SUM(CASE WHEN status = 'processed' THEN 1 ELSE 0 END) as processedCount, " +
-            "SUM(CASE WHEN status != 'processed' THEN 1 ELSE 0 END) as errorCount " +
-            "FROM MessageLog " +
-            "WHERE receive_time BETWEEN #{startDate} AND #{endDate} " +
-            "GROUP BY DATE(receive_time) " +
-            "ORDER BY date ASC")
-    List<Map<String, Object>> getDailyStats(@Param("startDate") LocalDate startDate,
-                                          @Param("endDate") LocalDate endDate);
 
     /**
-     * 获取指定设备的最近通信记录
+     * 获取指定时间范围内的设备消息
      */
-    @Select("SELECT message_id, device_id, payload, receive_time, status " +
-            "FROM MessageLog " +
+    @Select("SELECT * FROM message_log " +
             "WHERE device_id = #{deviceId} " +
-            "ORDER BY receive_time DESC " +
-            "LIMIT #{limit}")
-    List<MessageLog> getRecentByDeviceId(@Param("deviceId") Integer deviceId,
-                                        @Param("limit") Integer limit);
+            "AND receive_time BETWEEN #{startTime} AND #{endTime} " +
+            "ORDER BY receive_time DESC")
+    List<MessageLog> getDeviceMessages(@Param("deviceId") Integer deviceId,
+                                     @Param("startTime") ZonedDateTime startTime,
+                                     @Param("endTime") ZonedDateTime endTime);
 
     /**
-     * 获取错误日志
+     * 获取设备最新消息
      */
-    @Select("<script>" +
-            "SELECT message_id, device_id, payload, receive_time, status " +
-            "FROM MessageLog " +
-            "WHERE status != 'processed' " +
-            "<if test='startTime != null and endTime != null'>" +
-            "AND receive_time BETWEEN #{startTime} AND #{endTime} " +
-            "</if>" +
-            "ORDER BY receive_time DESC" +
+    @Select("SELECT * FROM message_log " +
+            "WHERE device_id = #{deviceId} " +
+            "ORDER BY receive_time DESC LIMIT 1")
+    MessageLog getLatestMessage(@Param("deviceId") Integer deviceId);
+
+    /**
+     * 更新消息状态
+     */
+    @Update("UPDATE message_log SET status = #{status} " +
+            "WHERE message_id = #{messageId}")
+    int updateStatus(@Param("messageId") Integer messageId,
+                    @Param("status") String status);
+
+    /**
+     * 批量更新消息状态
+     */
+    @Update("<script>" +
+            "UPDATE message_log SET status = #{status} " +
+            "WHERE message_id IN " +
+            "<foreach collection='messageIds' item='id' open='(' separator=',' close=')'>" +
+            "#{id}" +
+            "</foreach>" +
             "</script>")
-    List<MessageLog> getErrorLogs(@Param("startTime") LocalDateTime startTime,
-                                 @Param("endTime") LocalDateTime endTime);
+    int batchUpdateStatus(@Param("messageIds") List<Integer> messageIds,
+                         @Param("status") String status);
+
+    /**
+     * 删除指定时间之前的消息
+     */
+    @Delete("DELETE FROM message_log " +
+            "WHERE receive_time < #{time}")
+    int deleteMessagesBefore(@Param("time") ZonedDateTime time);
 }
 

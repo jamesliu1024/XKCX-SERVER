@@ -6,7 +6,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.context.event.ApplicationStartedEvent;
 import org.springframework.context.ApplicationListener;
 import org.springframework.stereotype.Component;
-import seig.ljm.xkckserver.entity.MessageLog;
 import seig.ljm.xkckserver.mqtt.MQTTGateway;
 import seig.ljm.xkckserver.mqtt.dto.ServerStartupMessage;
 import seig.ljm.xkckserver.service.MessageLogService;
@@ -41,12 +40,12 @@ public class ServerStartupListener implements ApplicationListener<ApplicationSta
             mqttGateway.sendToMqtt("xkck/server/status", messageJson);
             
             // 记录日志
-            MessageLog messageLog = new MessageLog();
-            messageLog.setDeviceId(-1); // -1 表示服务器
-            messageLog.setPayload(messageJson);
-            messageLog.setReceiveTime(LocalDateTime.now());
-            messageLog.setStatus("success");
-            messageLogService.save(messageLog);
+//            MessageLog messageLog = new MessageLog();
+//            messageLog.setDeviceId(-1); // -1 表示服务器
+//            messageLog.setPayload(messageJson);
+//            messageLog.setReceiveTime(LocalDateTime.now());
+//            messageLog.setStatus("success");
+//            messageLogService.save(messageLog);
             
             // 控制台输出
             log.info("Server started and notified MQTT broker: {}", messageJson);

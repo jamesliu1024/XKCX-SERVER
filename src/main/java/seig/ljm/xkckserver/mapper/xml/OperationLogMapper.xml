@@ -17,28 +17,4 @@
         log_id, operator_id, operation_type, target_id, operation_time, details
     </sql>
 
-    <!-- 获取指定操作员的操作记录 -->
-    <select id="getByOperator" resultMap="BaseResultMap">
-        SELECT 
-        <include refid="Base_Column_List"/>
-        FROM operation_log
-        WHERE operator_id = #{operatorId}
-        <if test="startTime != null and endTime != null">
-            AND operation_time BETWEEN #{startTime} AND #{endTime}
-        </if>
-        ORDER BY operation_time DESC
-    </select>
-
-    <!-- 按操作类型查询日志 -->
-    <select id="getByOperationType" resultMap="BaseResultMap">
-        SELECT 
-        <include refid="Base_Column_List"/>
-        FROM operation_log
-        WHERE operation_type = #{operationType}
-        <if test="startTime != null and endTime != null">
-            AND operation_time BETWEEN #{startTime} AND #{endTime}
-        </if>
-        ORDER BY operation_time DESC
-    </select>
-
 </mapper>

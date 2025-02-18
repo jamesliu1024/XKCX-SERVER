@@ -1,105 +1,110 @@
 package seig.ljm.xkckserver.controller;
 
-import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.baomidou.mybatisplus.core.metadata.IPage;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.format.annotation.DateTimeFormat;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import seig.ljm.xkckserver.common.ApiResult;
 import seig.ljm.xkckserver.entity.QuotaSetting;
 import seig.ljm.xkckserver.service.QuotaSettingService;
 
 import java.time.LocalDate;
 import java.util.List;
 
+/**
+ * 配额设置控制器
+ *
+ * @author ljm
+ * @since 2025-02-18
+ */
 @RestController
 @RequestMapping("/quotaSetting")
-@Tag(name = "QuotaSetting", description = "日期配额")
+@Tag(name = "QuotaSetting", description = "每日预约配额")
+@RequiredArgsConstructor
 public class QuotaSettingController {
 
-    @Autowired
-    private QuotaSettingService quotaSettingService;
+    private final QuotaSettingService quotaSettingService;
 
-    @PostMapping
-    @Operation(summary = "新增日期配额设置")
-    public ResponseEntity<QuotaSetting> addQuota(@RequestBody QuotaSetting quotaSetting) {
-        quotaSettingService.save(quotaSetting);
-        return ResponseEntity.ok(quotaSetting);
-    }
-
-    @DeleteMapping("/{id}")
-    @Operation(summary = "删除日期配额设置")
-    public ResponseEntity<Boolean> deleteQuota(
-            @Parameter(description = "配额设置ID") 
-            @PathVariable Integer id) {
-        boolean success = quotaSettingService.removeById(id);
-        return ResponseEntity.ok(success);
-    }
-
-    @PutMapping("/{id}")
-    @Operation(summary = "更新日期配额设置")
-    public ResponseEntity<Boolean> updateQuota(
-            @Parameter(description = "配额设置ID") 
-            @PathVariable Integer id,
-            @RequestBody QuotaSetting quotaSetting) {
-        quotaSetting.setQuotaId(id);
-        boolean success = quotaSettingService.updateById(quotaSetting);
-        return ResponseEntity.ok(success);
-    }
-
-    @GetMapping("/{id}")
-    @Operation(summary = "获取单个配额设置")
-    public ResponseEntity<QuotaSetting> getQuota(
-            @Parameter(description = "配额设置ID") 
-            @PathVariable Integer id) {
-        QuotaSetting quotaSetting = quotaSettingService.getById(id);
-        return ResponseEntity.ok(quotaSetting);
-    }
-
-    @GetMapping("/date/{date}")
-    @Operation(summary = "获取指定日期的配额设置")
-    public ResponseEntity<QuotaSetting> getQuotaByDate(
-            @Parameter(description = "日期 (格式: yyyy-MM-dd)") 
-            @PathVariable @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate date) {
-        QuotaSetting quota = quotaSettingService.getQuotaByDate(date);
-        return ResponseEntity.ok(quota);
-    }
-
-    @GetMapping("/available/{date}")
-    @Operation(summary = "检查指定日期是否还有剩余配额")
-    public ResponseEntity<Boolean> checkQuotaAvailable(
-            @Parameter(description = "日期 (格式: yyyy-MM-dd)") 
-            @PathVariable @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate date) {
-        boolean available = quotaSettingService.isQuotaAvailable(date);
-        return ResponseEntity.ok(available);
-    }
-
-    @GetMapping("/list")
-    @Operation(summary = "获取日期范围内的配额设置列表")
-    public ResponseEntity<List<QuotaSetting>> getQuotaList(
-            @Parameter(description = "开始日期 (格式: yyyy-MM-dd)") 
-            @RequestParam @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate startDate,
-            @Parameter(description = "结束日期 (格式: yyyy-MM-dd)") 
-            @RequestParam @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate endDate) {
-        List<QuotaSetting> quotas = quotaSettingService.getQuotasByDateRange(startDate, endDate);
-        return ResponseEntity.ok(quotas);
+    @GetMapping("/{quotaId}")
+    @Operation(summary = "获取配额设置", description = "根据配额ID获取详细信息")
+    public ApiResult<QuotaSetting> getQuotaSetting(
+            @Parameter(description = "配额ID") @PathVariable Integer quotaId) {
+        return ApiResult.success(quotaSettingService.getById(quotaId));
     }
 
     @GetMapping("/page")
-    @Operation(summary = "分页获取配额设置")
-    public ResponseEntity<Page<QuotaSetting>> getQuotaPage(
-            @Parameter(description = "页码") 
-            @RequestParam(defaultValue = "1") Integer pageNum,
-            @Parameter(description = "每页大小") 
-            @RequestParam(defaultValue = "10") Integer pageSize,
-            @Parameter(description = "开始日期 (格式: yyyy-MM-dd)") 
-            @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate startDate,
-            @Parameter(description = "结束日期 (格式: yyyy-MM-dd)") 
-            @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate endDate) {
-        
-        Page<QuotaSetting> quotas = quotaSettingService.getQuotaPage(pageNum, pageSize, startDate, endDate);
-        return ResponseEntity.ok(quotas);
+    @Operation(summary = "分页查询配额", description = "支持多条件分页查询配额设置")
+    public ApiResult<IPage<QuotaSetting>> getQuotaPage(
+            @Parameter(description = "页码") @RequestParam(defaultValue = "1") Integer current,
+            @Parameter(description = "每页大小") @RequestParam(defaultValue = "10") Integer size,
+            @Parameter(description = "开始日期") @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate startDate,
+            @Parameter(description = "结束日期") @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate endDate,
+            @Parameter(description = "是否节假日") @RequestParam(required = false) Boolean isHoliday) {
+        return ApiResult.success(quotaSettingService.getQuotaPage(current, size, startDate, endDate, isHoliday));
+    }
+
+    @GetMapping("/date/{date}")
+    @Operation(summary = "获取指定日期配额", description = "获取指定日期的配额设置")
+    public ApiResult<QuotaSetting> getDateQuota(
+            @Parameter(description = "日期") @PathVariable @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate date) {
+        return ApiResult.success(quotaSettingService.getDateQuota(date));
+    }
+
+    @GetMapping("/date-range")
+    @Operation(summary = "获取日期范围配额", description = "获取指定日期范围内的配额设置")
+    public ApiResult<List<QuotaSetting>> getDateRangeQuotas(
+            @Parameter(description = "开始日期") @RequestParam @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate startDate,
+            @Parameter(description = "结束日期") @RequestParam @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate endDate) {
+        return ApiResult.success(quotaSettingService.getDateRangeQuotas(startDate, endDate));
+    }
+
+    @PostMapping
+    @Operation(summary = "添加配额设置", description = "添加新的配额设置")
+    public ApiResult<QuotaSetting> addQuotaSetting(@RequestBody QuotaSetting quotaSetting) {
+        return ApiResult.success(quotaSettingService.addQuotaSetting(quotaSetting));
+    }
+
+    @PutMapping("/{quotaId}")
+    @Operation(summary = "更新配额设置", description = "更新指定配额设置的信息")
+    public ApiResult<QuotaSetting> updateQuotaSetting(
+            @Parameter(description = "配额ID") @PathVariable Integer quotaId,
+            @RequestBody QuotaSetting quotaSetting) {
+        quotaSetting.setQuotaId(quotaId);
+        return ApiResult.success(quotaSettingService.updateQuotaSetting(quotaSetting));
+    }
+
+    @PutMapping("/{quotaId}/increment")
+    @Operation(summary = "增加当前预约数", description = "增加指定配额设置的当前预约数")
+    public ApiResult<Boolean> incrementCurrentCount(
+            @Parameter(description = "配额ID") @PathVariable Integer quotaId) {
+        return ApiResult.success(quotaSettingService.incrementCurrentCount(quotaId));
+    }
+
+    @PutMapping("/{quotaId}/decrement")
+    @Operation(summary = "减少当前预约数", description = "减少指定配额设置的当前预约数")
+    public ApiResult<Boolean> decrementCurrentCount(
+            @Parameter(description = "配额ID") @PathVariable Integer quotaId) {
+        return ApiResult.success(quotaSettingService.decrementCurrentCount(quotaId));
+    }
+
+    @GetMapping("/check-available/{date}")
+    @Operation(summary = "检查配额可用性", description = "检查指定日期是否还有可用配额")
+    public ApiResult<Boolean> checkQuotaAvailable(
+            @Parameter(description = "日期") @PathVariable @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate date) {
+        return ApiResult.success(quotaSettingService.checkQuotaAvailable(date));
+    }
+
+    @PostMapping("/batch")
+    @Operation(summary = "批量设置配额", description = "批量设置日期范围内的配额")
+    public ApiResult<Boolean> batchSetQuota(
+            @Parameter(description = "开始日期") @RequestParam @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate startDate,
+            @Parameter(description = "结束日期") @RequestParam @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate endDate,
+            @Parameter(description = "最大配额") @RequestParam Integer maxQuota,
+            @Parameter(description = "是否节假日") @RequestParam(required = false) Boolean isHoliday,
+            @Parameter(description = "特殊事件说明") @RequestParam(required = false) String specialEvent) {
+        return ApiResult.success(quotaSettingService.batchSetQuota(startDate, endDate, maxQuota, isHoliday, specialEvent));
     }
 }

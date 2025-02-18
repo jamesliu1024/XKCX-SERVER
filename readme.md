@@ -301,6 +301,89 @@ xkck/admin/{device_id}/*          # 管理设备专用主题
 ## 数据库设计
 详细数据库设计文档请参考 src/main/resources/static/db.sql
 
+### 主要表结构
+1. visitor: 访客表
+   - 统一管理访客和管理员账户
+   - 角色区分：管理员/普通访客
+   - 支持账号状态管理：正常/禁用/黑名单
+   - 使用软删除机制（hidden字段）
+
+2. access_device: 门禁设备表
+   - 设备类型：校园大门/设施门禁/管理设备
+   - 支持设备状态监控和心跳检测
+   - 记录设备MAC地址确保唯一性
+   - 支持门禁状态实时更新
+
+3. reservation: 预约表
+   - 完整记录预约全生命周期
+   - 支持被访人确认机制
+   - 使用软删除机制
+   - 包含详细的预约信息和时间控制
+
+4. rfid_card: RFID卡片表
+   - 管理所有门禁卡的基础信息
+   - 支持多种卡片状态：可用/已发放/挂失/注销/损坏
+
+5. rfid_card_record: RFID卡使用记录表
+   - 记录卡片完整使用历史
+   - 包含发卡、还卡、挂失等操作记录
+   - 关联预约信息和操作管理员
+
+### 数据流转示例
+1. 访客预约流程
+   ```
+   访客注册 -> 提交预约 -> 管理员审核 -> 领取RFID卡 -> 按时进入 -> 离开 -> 归还卡片
+   ```
+
+2. 数据记录流程
+   ```
+   visitor表(注册) 
+   -> reservation表(预约) 
+   -> operation_log表(审核) 
+   -> rfid_card_record表(发卡) 
+   -> access_log表(进出) 
+   -> message_log表(MQTT通信) 
+   -> rfid_card_record表(还卡)
+   ```
+
+### 关键字段说明
+1. 时间字段
+   - create_time: 记录创建时间
+   - update_time: 记录更新时间
+   - start_time/end_time: 预约/有效期时间范围
+   - operation_time: 操作执行时间
+   - access_time: 门禁刷卡时间
+
+2. 状态字段
+   - account_status: 账号状态(normal/disabled/blacklist)
+   - device_status: 设备状态(online/offline/maintenance)
+   - reservation_status: 预约状态(pending/confirmed/used/canceled)
+   - card_status: 卡片状态(available/issued/lost/deactivated/damage)
+
+3. 关联字段
+   - visitor_id: 访客/管理员ID
+   - device_id: 设备ID
+   - reservation_id: 预约ID
+   - card_id: 卡片ID
+   - operator_id: 操作人员ID
+
+### 数据安全措施
+1. 密码安全
+   - 使用SHA256存储密码哈希
+   - 禁止明文存储敏感信息
+
+2. 数据保护
+   - 使用软删除机制
+   - 保留操作日志
+   - MQTT消息记录
+   - 黑名单管理
+
+3. 数据完整性
+   - 外键约束
+   - 唯一索引
+   - 状态枚举限制
+   - 时间戳记录
+
 ## 贡献指南
 1. Fork 本仓库
 2. 创建新的分支

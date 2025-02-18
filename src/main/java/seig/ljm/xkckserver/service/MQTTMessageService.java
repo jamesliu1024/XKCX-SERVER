@@ -32,4 +32,12 @@ public interface MQTTMessageService {
      */
     void handleStatusReport(String payload);
 
+    /**
+     * 发送紧急控制命令
+     * @param deviceId 设备ID
+     * @param action 动作（emergency_open或emergency_close）
+     * @param reason 原因
+     * @return 发送是否成功
+     */
+    boolean sendEmergencyControl(Integer deviceId, String action, String reason);
 }

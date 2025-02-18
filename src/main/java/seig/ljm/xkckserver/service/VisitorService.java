@@ -1,54 +1,108 @@
 package seig.ljm.xkckserver.service;
 
-import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import seig.ljm.xkckserver.entity.Visitor;
+import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.service.IService;
+import seig.ljm.xkckserver.entity.Visitor;
+
+import java.time.ZonedDateTime;
 import java.util.List;
-import java.util.Map;
-import java.time.LocalDateTime;
 
 /**
- * <p>
- *  服务类
- * </p>
+ * 访客服务接口
  *
  * @author ljm
- * @since 2025-02-14
+ * @since 2025-02-18
  */
 public interface VisitorService extends IService<Visitor> {
-    
+
     /**
-     * 根据微信OpenID查询访客
+     * 注册新访客
+     *
+     * @param visitor 访客信息
+     * @return 注册成功的访客信息
      */
-    Visitor getByOpenId(String openId);
-    
+    Visitor register(Visitor visitor);
+
+    /**
+     * 更新访客信息
+     *
+     * @param visitor 访客信息
+     * @return 更新后的访客信息
+     */
+    Visitor updateVisitor(Visitor visitor);
+
     /**
      * 分页查询访客列表
+     *
+     * @param current 当前页
+     * @param size    每页大小
+     * @param role    角色筛选（可选）
+     * @param status  状态筛选（可选）
+     * @return 分页结果
      */
-    Page<Visitor> getVisitorPage(Integer pageNum, Integer pageSize, String status);
-    
+    IPage<Visitor> getVisitorPage(Integer current, Integer size, String role, String status);
+
+    /**
+     * 根据手机号查询访客
+     *
+     * @param phone 手机号
+     * @return 访客信息
+     */
+    Visitor getByPhone(String phone);
+
     /**
      * 根据证件号码查询访客
+     *
+     * @param idNumber 证件号码
+     * @return 访客信息
      */
     Visitor getByIdNumber(String idNumber);
-    
+
     /**
-     * 查询指定部门的访客列表
+     * 根据微信OpenID查询访客
+     *
+     * @param openId 微信OpenID
+     * @return 访客信息
      */
-    List<Visitor> getByHostDepartment(String department);
-    
+    Visitor getByWechatOpenId(String openId);
+
     /**
-     * 查询被访人的访客列表
+     * 更新访客账号状态
+     *
+     * @param visitorId 访客ID
+     * @param status    新状态
+     * @return 是否更新成功
      */
-    List<Visitor> getByHostName(String hostName);
-    
+    Boolean updateAccountStatus(Integer visitorId, String status);
+
     /**
-     * 更新访客状态
+     * 更新访客最后登录时间
+     *
+     * @param visitorId  访客ID
+     * @param loginTime 登录时间
+     * @return 是否更新成功
      */
-    boolean updateVisitorStatus(Integer visitorId, String status);
-    
+    Boolean updateLastLoginTime(Integer visitorId, ZonedDateTime loginTime);
+
     /**
-     * 获取访客统计信息
+     * 软删除访客
+     *
+     * @param visitorId 访客ID
+     * @return 是否删除成功
      */
-    Map<String, Object> getVisitorStats(LocalDateTime startTime, LocalDateTime endTime);
+    Boolean deleteVisitor(Integer visitorId);
+
+    /**
+     * 获取所有管理员列表
+     *
+     * @return 管理员列表
+     */
+    List<Visitor> getAllAdmins();
+
+    /**
+     * 获取所有黑名单用户
+     *
+     * @return 黑名单用户列表
+     */
+    List<Visitor> getAllBlacklisted();
 }

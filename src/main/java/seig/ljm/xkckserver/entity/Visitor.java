@@ -4,12 +4,11 @@ import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
-//import io.swagger.annotations.ApiModel;
-//import io.swagger.annotations.ApiModelProperty;
-import java.io.Serializable;
-import java.time.LocalDateTime;
-
+import com.fasterxml.jackson.annotation.JsonFormat;
 import io.swagger.v3.oas.annotations.media.Schema;
+import seig.ljm.xkckserver.constant.TimeZoneConstant;
+import java.io.Serializable;
+import java.time.ZonedDateTime;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
@@ -19,63 +18,56 @@ import lombok.ToString;
  * </p>
  *
  * @author ljm
- * @since 2025-02-14
+ * @since 2025-02-18
  */
 @Getter
 @Setter
 @ToString
-@TableName("Visitor")
-//@ApiModel(value = "Visitor对象", description = "")
+@TableName("visitor")
 @Schema(name = "Visitor", description = "")
 public class Visitor implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
-    @Schema(name = "visitorId", description = "")
     @TableId(value = "visitor_id", type = IdType.AUTO)
     private Integer visitorId;
 
-    @Schema(name = "name", description = "")
     @TableField("name")
     private String name;
 
-    @Schema(name = "phone", description = "")
     @TableField("phone")
     private String phone;
 
-    @Schema(name = "wechatOpenid", description = "")
     @TableField("wechat_openid")
     private String wechatOpenid;
 
-    @Schema(name = "idType", description = "")
     @TableField("id_type")
     private String idType;
 
-    @Schema(name = "idNumber", description = "")
     @TableField("id_number")
     private String idNumber;
 
-    @Schema(name = "reason", description = "")
-    @TableField("reason")
-    private String reason;
+    @TableField("role")
+    private String role;
 
-    @Schema(name = "hostDepartment", description = "")
-    @TableField("host_department")
-    private String hostDepartment;
+    @TableField("account_status")
+    private String accountStatus;
 
-    @Schema(name = "hostName", description = "")
-    @TableField("host_name")
-    private String hostName;
+    @TableField("hidden")
+    private Boolean hidden;
 
-    @Schema(name = "hostPhone", description = "")
-    @TableField("status")
-    private String status;
+    @TableField("password_hash")
+    private String passwordHash;
 
-    @Schema(name = "expireTime", description = "")
-    @TableField("expire_time")
-    private LocalDateTime expireTime;
+    @TableField("last_login_time")
+    @JsonFormat(pattern = TimeZoneConstant.DATE_TIME_PATTERN, timezone = TimeZoneConstant.ZONE_NAME)
+    private ZonedDateTime lastLoginTime;
 
-    @Schema(name = "createTime", description = "")
     @TableField("create_time")
-    private LocalDateTime createTime;
+    @JsonFormat(pattern = TimeZoneConstant.DATE_TIME_PATTERN, timezone = TimeZoneConstant.ZONE_NAME)
+    private ZonedDateTime createTime;
+
+    @TableField("update_time")
+    @JsonFormat(pattern = TimeZoneConstant.DATE_TIME_PATTERN, timezone = TimeZoneConstant.ZONE_NAME)
+    private ZonedDateTime updateTime;
 }

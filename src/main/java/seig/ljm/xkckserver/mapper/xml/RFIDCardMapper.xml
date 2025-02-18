@@ -1,37 +1,20 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
-<mapper namespace="seig.ljm.xkckserver.mapper.RFIDCardMapper">
+<mapper namespace="seig.ljm.xkckserver.mapper.RfidCardMapper">
 
     <!-- 通用查询映射结果 -->
-    <resultMap id="BaseResultMap" type="seig.ljm.xkckserver.entity.RFIDCard">
+    <resultMap id="BaseResultMap" type="seig.ljm.xkckserver.entity.RfidCard">
         <id column="card_id" property="cardId" />
         <result column="uid" property="uid" />
-        <result column="reservation_id" property="reservationId" />
         <result column="status" property="status" />
-        <result column="issue_time" property="issueTime" />
-        <result column="return_time" property="returnTime" />
-        <result column="expire_time" property="expireTime" />
-        <result column="last_admin_id" property="lastAdminId" />
         <result column="create_time" property="createTime" />
         <result column="update_time" property="updateTime" />
+        <result column="remarks" property="remarks" />
     </resultMap>
 
     <!-- 通用查询结果列 -->
     <sql id="Base_Column_List">
-        card_id, uid, reservation_id, status, issue_time, return_time, expire_time,
-        last_admin_id, create_time, update_time
+        card_id, uid, status, create_time, update_time, remarks
     </sql>
-
-    <!-- 统计RFID卡使用情况 -->
-    <select id="selectCardStats" resultType="java.util.Map">
-        SELECT 
-            COUNT(*) as total_cards,
-            COUNT(CASE WHEN status = 'issued' THEN 1 END) as issued_count,
-            COUNT(CASE WHEN status = 'returned' THEN 1 END) as returned_count,
-            COUNT(CASE WHEN status = 'lost' THEN 1 END) as lost_count,
-            COUNT(CASE WHEN status = 'issued' AND expire_time < NOW() THEN 1 END) as expired_count
-        FROM rfid_card
-        WHERE issue_time BETWEEN #{startTime} AND #{endTime}
-    </select>
 
 </mapper>

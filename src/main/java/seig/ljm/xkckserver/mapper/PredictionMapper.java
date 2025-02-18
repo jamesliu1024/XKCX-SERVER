@@ -1,61 +1,67 @@
 package seig.ljm.xkckserver.mapper;
 
-import seig.ljm.xkckserver.entity.Prediction;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
-import org.apache.ibatis.annotations.Param;
-import org.apache.ibatis.annotations.Select;
-import org.apache.ibatis.annotations.Update;
-import org.apache.ibatis.annotations.Insert;
+import org.apache.ibatis.annotations.*;
+import seig.ljm.xkckserver.entity.Prediction;
 
-import java.time.LocalDate;
+//import java.time.LocalDate;
+import java.time.ZonedDateTime;
 import java.util.List;
+import java.util.Map;
 
 /**
- * <p>
- * 预测数据 Mapper 接口
- * </p>
+ * 人流量预测Mapper接口
  *
  * @author ljm
- * @since 2025-02-14
+ * @since 2025-02-18
  */
+@Mapper
 public interface PredictionMapper extends BaseMapper<Prediction> {
-    
+
+    /**
+     * 获取指定日期范围内的预测数据
+     */
+    @Select("SELECT * FROM prediction " +
+            "WHERE predict_date BETWEEN #{startDate} AND #{endDate} " +
+            "ORDER BY predict_date ASC")
+    List<Prediction> getDateRangePredictions(@Param("startDate") ZonedDateTime startDate,
+                                           @Param("endDate") ZonedDateTime endDate);
+
     /**
      * 获取指定日期的预测数据
      */
-    @Select("SELECT * FROM Prediction WHERE predict_date = #{date}")
-    Prediction selectByDate(@Param("date") LocalDate date);
+    @Select("SELECT * FROM prediction WHERE predict_date = #{date}")
+    Prediction getDatePrediction(@Param("date") ZonedDateTime date);
 
     /**
-     * 获取日期范围内的平均预测人数
+     * 更新实际人数和准确度
      */
-    @Select("SELECT AVG(predicted_count) FROM Prediction " +
+    @Update("UPDATE prediction SET " +
+            "actual_count = #{actualCount}, " +
+            "accuracy = #{accuracy}, " +
+            "update_time = NOW() " +
+            "WHERE prediction_id = #{predictionId}")
+    int updateActualCount(@Param("predictionId") Integer predictionId,
+                         @Param("actualCount") Integer actualCount,
+                         @Param("accuracy") java.math.BigDecimal accuracy);
+
+    /**
+     * 获取准确度统计数据
+     */
+    @Select("SELECT " +
+            "COUNT(*) as total_count, " +
+            "AVG(accuracy) as avg_accuracy, " +
+            "AVG(confidence) as avg_confidence, " +
+            "COUNT(actual_count) as actual_data_count " +
+            "FROM prediction " +
             "WHERE predict_date BETWEEN #{startDate} AND #{endDate}")
-    Integer selectAvgPredictedCount(@Param("startDate") LocalDate startDate, 
-                                  @Param("endDate") LocalDate endDate);
+    Map<String, Object> getAccuracyStats(@Param("startDate") ZonedDateTime startDate,
+                                        @Param("endDate") ZonedDateTime endDate);
 
     /**
-     * 获取指定日期范围内的所有预测数据
+     * 删除指定日期之前的预测数据
      */
-    @Select("SELECT * FROM Prediction " +
-            "WHERE predict_date BETWEEN #{startDate} AND #{endDate} " +
-            "ORDER BY predict_date")
-    List<Prediction> selectByDateRange(@Param("startDate") LocalDate startDate, 
-                                     @Param("endDate") LocalDate endDate);
-
-    /**
-     * 更新预测准确度
-     */
-    @Update("UPDATE Prediction SET accuracy = #{accuracy} " +
-            "WHERE predict_date = #{date}")
-    int updateAccuracy(@Param("date") LocalDate date, 
-                      @Param("accuracy") Double accuracy);
-
-    /**
-     * 插入新的预测数据
-     */
-    @Insert("INSERT INTO Prediction (predict_date, predicted_count, confidence, model_version) " +
-            "VALUES (#{predictDate}, #{predictedCount}, #{confidence}, #{modelVersion})")
-    int insertPrediction(Prediction prediction);
+    @Delete("DELETE FROM prediction WHERE predict_date < #{date}")
+    int deleteOldPredictions(@Param("date") ZonedDateTime date);
 }
 

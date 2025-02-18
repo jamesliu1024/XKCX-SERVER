@@ -7,53 +7,18 @@
         <id column="log_id" property="logId" />
         <result column="visitor_id" property="visitorId" />
         <result column="device_id" property="deviceId" />
+        <result column="card_id" property="cardId" />
+        <result column="reservation_id" property="reservationId" />
         <result column="access_time" property="accessTime" />
         <result column="access_type" property="accessType" />
         <result column="result" property="result" />
         <result column="reason" property="reason" />
-        <result column="description" property="description" />
+        <result column="hidden" property="hidden" />
     </resultMap>
 
     <!-- 通用查询结果列 -->
     <sql id="Base_Column_List">
-        log_id, visitor_id, device_id, access_time, access_type, result, reason
+        log_id, visitor_id, device_id, card_id, reservation_id, access_time, access_type, result, reason, hidden
     </sql>
 
-    <!-- 获取设备进出统计 -->
-    <select id="getDeviceStats" resultType="java.util.Map">
-        SELECT 
-            COUNT(*) as totalAccess,
-            SUM(CASE WHEN access_type = 'entry' THEN 1 ELSE 0 END) as entryCount,
-            SUM(CASE WHEN access_type = 'exit' THEN 1 ELSE 0 END) as exitCount,
-            SUM(CASE WHEN result = 'allowed' THEN 1 ELSE 0 END) as allowedCount,
-            SUM(CASE WHEN result = 'denied' THEN 1 ELSE 0 END) as deniedCount
-        FROM AccessLog
-        WHERE device_id = #{deviceId}
-        AND access_time BETWEEN #{startTime} AND #{endTime}
-    </select>
-
-    <!-- 获取每日进出统计 -->
-    <select id="getDailyStats" resultType="java.util.Map">
-        SELECT 
-            DATE(access_time) as date,
-            COUNT(*) as totalCount,
-            SUM(CASE WHEN access_type = 'entry' THEN 1 ELSE 0 END) as entryCount,
-            SUM(CASE WHEN access_type = 'exit' THEN 1 ELSE 0 END) as exitCount
-        FROM AccessLog
-        WHERE access_time BETWEEN #{startDate} AND #{endDate}
-        GROUP BY DATE(access_time)
-        ORDER BY date
-    </select>
-
-    <!-- 获取访问高峰时段 -->
-    <select id="getPeakHours" resultType="java.util.Map">
-        SELECT 
-            HOUR(access_time) as hour,
-            COUNT(*) as count
-        FROM AccessLog
-        WHERE DATE(access_time) = DATE(#{date})
-        GROUP BY HOUR(access_time)
-        ORDER BY count DESC
-    </select>
-    
 </mapper>

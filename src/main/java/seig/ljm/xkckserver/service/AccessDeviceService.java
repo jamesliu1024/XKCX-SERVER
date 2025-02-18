@@ -3,38 +3,62 @@ package seig.ljm.xkckserver.service;
 import seig.ljm.xkckserver.entity.AccessDevice;
 import com.baomidou.mybatisplus.extension.service.IService;
 
-import java.util.List;
-import java.util.Map;
-
 /**
  * 门禁设备服务接口
+ *
+ * @author ljm
+ * @since 2025-02-18
  */
 public interface AccessDeviceService extends IService<AccessDevice> {
+    
     /**
-     * 获取指定设备的使用统计
+     * 添加门禁设备
+     *
+     * @param device 设备信息
+     * @return 添加后的设备信息
+     */
+    AccessDevice addDevice(AccessDevice device);
+    
+    /**
+     * 更新门禁设备信息
+     *
+     * @param device 设备信息
+     * @return 更新后的设备信息
+     */
+    AccessDevice updateDevice(AccessDevice device);
+    
+    /**
+     * 获取设备状态
+     *
      * @param deviceId 设备ID
-     * @return 统计数据
+     * @return 设备状态信息
      */
-    Map<String, Object> getDeviceUsageStats(Integer deviceId);
-
+    AccessDevice getDeviceStatus(Integer deviceId);
+    
     /**
-     * 获取所有在线设备
-     * @return 在线设备列表
+     * 紧急控制
+     *
+     * @param deviceId 设备ID
+     * @param action 控制动作
+     * @param reason 操作原因
+     * @return 操作结果
      */
-    List<AccessDevice> getOnlineDevices();
+    Boolean emergencyControl(Integer deviceId, String action, String reason);
+    
+    /**
+     * 更新设备心跳时间
+     *
+     * @param deviceId 设备ID
+     * @return 更新结果
+     */
+    Boolean updateHeartbeat(Integer deviceId);
 
     /**
      * 更新设备状态
+     *
      * @param deviceId 设备ID
-     * @param status 新状态
-     * @return 更新是否成功
+     * @param status 设备状态
+     * @return 更新结果
      */
-    boolean updateDeviceStatus(Integer deviceId, String status);
-
-    /**
-     * 按位置查找设备
-     * @param location 位置
-     * @return 设备列表
-     */
-    List<AccessDevice> findByLocation(String location);
+    Boolean updateDeviceStatus(Integer deviceId, String status);
 }

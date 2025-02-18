@@ -1,36 +1,43 @@
 package seig.ljm.xkckserver.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
-import org.apache.ibatis.annotations.Mapper;
-import org.apache.ibatis.annotations.Param;
-import org.apache.ibatis.annotations.Select;
+import org.apache.ibatis.annotations.*;
 import seig.ljm.xkckserver.entity.AccessDevice;
 
-import java.util.Map;
-
 /**
- * <p>
- *  Mapper 接口
- * </p>
+ * 门禁设备Mapper接口
  *
  * @author ljm
- * @since 2025-02-14
+ * @since 2025-02-18
  */
 @Mapper
 public interface AccessDeviceMapper extends BaseMapper<AccessDevice> {
+
     /**
-     * 获取设备使用统计
-     * @param deviceId 设备ID
-     * @return 统计数据
+     * 根据IP地址查询设备
      */
-    @Select("SELECT " +
-            "d.device_id, " +
-            "COUNT(l.log_id) as totalAccess, " +
-            "SUM(CASE WHEN l.result = 'allowed' THEN 1 ELSE 0 END) * 100.0 / COUNT(l.log_id) as successRate " +
-            "FROM AccessDevice d " +
-            "LEFT JOIN AccessLog l ON d.device_id = l.device_id " +
-            "WHERE d.device_id = #{deviceId} " +
-            "GROUP BY d.device_id")
-    Map<String, Object> getDeviceUsageStats(@Param("deviceId") Integer deviceId);
+    @Select("SELECT * FROM access_device WHERE ip_address = #{ipAddress}")
+    AccessDevice selectByIpAddress(@Param("ipAddress") String ipAddress);
+
+    /**
+     * 更新设备状态
+     */
+    @Update("UPDATE access_device SET status = #{status}, door_status = #{doorStatus} WHERE device_id = #{deviceId}")
+    int updateDeviceStatus(
+            @Param("deviceId") Integer deviceId,
+            @Param("status") String status,
+            @Param("doorStatus") String doorStatus);
+
+    /**
+     * 更新设备心跳时间
+     */
+    @Update("UPDATE access_device SET last_heartbeat_time = NOW(), status = 'online' WHERE device_id = #{deviceId}")
+    int updateHeartbeatTime(@Param("deviceId") Integer deviceId);
+
+    /**
+     * 查询所有在线设备
+     */
+    @Select("SELECT * FROM access_device WHERE status = 'online'")
+    java.util.List<AccessDevice> selectOnlineDevices();
 }
 

@@ -4,12 +4,11 @@ import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
-//import io.swagger.annotations.ApiModel;
-//import io.swagger.annotations.ApiModelProperty;
-import java.io.Serializable;
-import java.time.LocalDateTime;
-
+import com.fasterxml.jackson.annotation.JsonFormat;
 import io.swagger.v3.oas.annotations.media.Schema;
+import seig.ljm.xkckserver.constant.TimeZoneConstant;
+import java.io.Serializable;
+import java.time.ZonedDateTime;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
@@ -19,35 +18,30 @@ import lombok.ToString;
  * </p>
  *
  * @author ljm
- * @since 2025-02-14
+ * @since 2025-02-18
  */
 @Getter
 @Setter
 @ToString
-@TableName("MessageLog")
-//@ApiModel(value = "MessageLog对象", description = "")
+@TableName("message_log")
 @Schema(name = "MessageLog", description = "")
 public class MessageLog implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
-    @Schema(name = "messageId", description = "")
     @TableId(value = "message_id", type = IdType.AUTO)
     private Integer messageId;
 
-    @Schema(name = "deviceId", description = "")
     @TableField("device_id")
     private Integer deviceId;
 
-    @Schema(name = "payload", description = "")
     @TableField("payload")
     private String payload;
 
-    @Schema(name = "sendTime", description = "")
     @TableField("receive_time")
-    private LocalDateTime receiveTime;
+    @JsonFormat(pattern = TimeZoneConstant.DATE_TIME_PATTERN, timezone = TimeZoneConstant.ZONE_NAME)
+    private ZonedDateTime receiveTime;
 
-    @Schema(name = "status", description = "")
     @TableField("status")
     private String status;
 }

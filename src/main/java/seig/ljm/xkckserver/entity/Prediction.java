@@ -4,56 +4,85 @@ import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
-import java.io.Serializable;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-
+import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONObject;
+import com.fasterxml.jackson.annotation.JsonFormat;
 import io.swagger.v3.oas.annotations.media.Schema;
+import java.io.Serializable;
+import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.time.ZonedDateTime;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
+import seig.ljm.xkckserver.constant.TimeZoneConstant;
+
 /**
  * <p>
  * 
  * </p>
  *
  * @author ljm
- * @since 2025-02-14
+ * @since 2025-02-18
  */
 @Getter
 @Setter
 @ToString
-@TableName("Prediction")
-@Schema(name = "Prediction", description = "预测数据")
+@TableName("prediction")
+@Schema(name = "Prediction", description = "")
 public class Prediction implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
-    @Schema(description = "预测记录ID")
     @TableId(value = "prediction_id", type = IdType.AUTO)
     private Integer predictionId;
 
-    @Schema(description = "预测日期")
     @TableField("predict_date")
     private LocalDate predictDate;
 
-    @Schema(description = "预测访客数量")
     @TableField("predicted_count")
     private Integer predictedCount;
 
-    @Schema(description = "预测准确度（百分比）")
     @TableField("accuracy")
-    private Double accuracy;
+    private BigDecimal accuracy;
 
-    @Schema(description = "预测置信度（百分比）")
+    @TableField("actual_count")
+    private Integer actualCount;
+
     @TableField("confidence")
-    private Double confidence;
+    private BigDecimal confidence;
 
-    @Schema(description = "预测模型版本")
+    @TableField("factors")
+    @Schema(description = "影响因素（JSON格式）")
+    private String factorsStr;
+
+    @TableField(exist = false)
+    private JSONObject factors;
+
     @TableField("model_version")
     private String modelVersion;
 
-    @Schema(description = "预测生成时间")
     @TableField("generate_time")
-    private LocalDateTime generateTime;
+    @JsonFormat(pattern = TimeZoneConstant.DATE_TIME_PATTERN, timezone = TimeZoneConstant.ZONE_NAME)
+    private ZonedDateTime generateTime;
+
+    @TableField("update_time")
+    @JsonFormat(pattern = TimeZoneConstant.DATE_TIME_PATTERN, timezone = TimeZoneConstant.ZONE_NAME)
+    private ZonedDateTime updateTime;
+
+    public JSONObject getFactors() {
+        if (this.factorsStr != null) {
+            return JSON.parseObject(this.factorsStr);
+        }
+        return null;
+    }
+
+    public void setFactors(JSONObject factors) {
+        this.factors = factors;
+        if (factors != null) {
+            this.factorsStr = factors.toJSONString();
+        } else {
+            this.factorsStr = null;
+        }
+    }
 }

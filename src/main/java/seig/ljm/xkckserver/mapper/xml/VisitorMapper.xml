@@ -10,28 +10,18 @@
         <result column="wechat_openid" property="wechatOpenid" />
         <result column="id_type" property="idType" />
         <result column="id_number" property="idNumber" />
-        <result column="reason" property="reason" />
-        <result column="host_department" property="hostDepartment" />
-        <result column="host_name" property="hostName" />
-        <result column="status" property="status" />
-        <result column="expire_time" property="expireTime" />
+        <result column="role" property="role" />
+        <result column="account_status" property="accountStatus" />
+        <result column="hidden" property="hidden" />
+        <result column="password_hash" property="passwordHash" />
+        <result column="last_login_time" property="lastLoginTime" />
         <result column="create_time" property="createTime" />
+        <result column="update_time" property="updateTime" />
     </resultMap>
 
     <!-- 通用查询结果列 -->
     <sql id="Base_Column_List">
-        visitor_id, name, phone, wechat_openid, id_type, id_number, reason, host_department, host_name, status, expire_time, create_time
+        visitor_id, name, phone, wechat_openid, id_type, id_number, role, account_status, hidden, password_hash, last_login_time, create_time, update_time
     </sql>
-
-    <!-- 自定义SQL查询 -->
-    <select id="selectVisitorStats" resultType="java.util.Map">
-        SELECT 
-            COUNT(*) as total_visitors,
-            COUNT(CASE WHEN status = 'pending' THEN 1 END) as pending_count,
-            COUNT(CASE WHEN status = 'approved' THEN 1 END) as approved_count,
-            COUNT(CASE WHEN status = 'expired' THEN 1 END) as expired_count
-        FROM Visitor
-        WHERE create_time BETWEEN #{startTime} AND #{endTime}
-    </select>
 
 </mapper>

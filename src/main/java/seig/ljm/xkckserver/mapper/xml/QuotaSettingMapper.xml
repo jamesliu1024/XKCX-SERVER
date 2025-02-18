@@ -7,35 +7,16 @@
         <id column="quota_id" property="quotaId" />
         <result column="date" property="date" />
         <result column="max_quota" property="maxQuota" />
+        <result column="current_count" property="currentCount" />
+        <result column="special_event" property="specialEvent" />
+        <result column="is_holiday" property="isHoliday" />
+        <result column="create_time" property="createTime" />
+        <result column="update_time" property="updateTime" />
     </resultMap>
 
     <!-- 通用查询结果列 -->
     <sql id="Base_Column_List">
-        quota_id, date, max_quota
+        quota_id, date, max_quota, current_count, special_event, is_holiday, create_time, update_time
     </sql>
-
-    <!-- 根据日期范围统计配额使用情况 -->
-    <select id="selectQuotaStats" resultType="java.util.Map">
-        SELECT 
-            date,
-            max_quota as total_quota,
-            (SELECT COUNT(*) 
-             FROM Reservation
-             WHERE DATE(start_time) = qs.date 
-             AND status = 'confirmed') as used_quota
-        FROM QuotaSetting qs
-        WHERE date BETWEEN #{startDate} AND #{endDate}
-        ORDER BY date
-    </select>
-
-    <!-- 获取未来七天的配额设置 -->
-    <select id="selectUpcomingQuotas" resultMap="BaseResultMap">
-        SELECT 
-            <include refid="Base_Column_List" />
-        FROM quota_setting
-        WHERE date >= #{currentDate}
-        AND date <= DATE_ADD(#{currentDate}, INTERVAL 7 DAY)
-        ORDER BY date
-    </select>
 
 </mapper>

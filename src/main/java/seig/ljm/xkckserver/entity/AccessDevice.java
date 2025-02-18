@@ -4,9 +4,11 @@ import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
-import java.io.Serializable;
-
+import com.fasterxml.jackson.annotation.JsonFormat;
 import io.swagger.v3.oas.annotations.media.Schema;
+import seig.ljm.xkckserver.constant.TimeZoneConstant;
+import java.io.Serializable;
+import java.time.ZonedDateTime;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
@@ -16,39 +18,45 @@ import lombok.ToString;
  * </p>
  *
  * @author ljm
- * @since 2025-02-14
+ * @since 2025-02-18
  */
 @Getter
 @Setter
 @ToString
-@TableName("AccessDevice")
-@Schema(name = "AccessDevice", description = "门禁设备")
+@TableName("access_device")
+@Schema(name = "AccessDevice", description = "")
 public class AccessDevice implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
-    @Schema(description = "设备ID")
     @TableId(value = "device_id", type = IdType.AUTO)
     private Integer deviceId;
 
-    @Schema(description = "设备位置")
     @TableField("location")
     private String location;
 
-    @Schema(description = "设备IP地址")
     @TableField("ip_address")
     private String ipAddress;
 
-    @Schema(description = "设备状态：online-在线,offline-离线,maintenance-维护中")
+    @TableField("mac_address")
+    private String macAddress;
+
     @TableField("status")
     private String status;
 
-    @Schema(description = "设备类型：campus_gate-校园大门,facility_gate-设施门禁,management-管理设备")
     @TableField("device_type")
     private String deviceType;
 
-    @Schema(description = "设备描述")
+    @TableField("last_heartbeat_time")
+    @JsonFormat(pattern = TimeZoneConstant.DATE_TIME_PATTERN, timezone = TimeZoneConstant.ZONE_NAME)
+    private ZonedDateTime lastHeartbeatTime;
+
+    @TableField("firmware_version")
+    private String firmwareVersion;
+
+    @TableField("door_status")
+    private String doorStatus;
+
     @TableField("description")
     private String description;
-
 }

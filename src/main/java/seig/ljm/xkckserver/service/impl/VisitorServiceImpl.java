@@ -1,40 +1,113 @@
 package seig.ljm.xkckserver.service.impl;
 
-import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import seig.ljm.xkckserver.constant.TimeZoneConstant;
 import seig.ljm.xkckserver.entity.Visitor;
 import seig.ljm.xkckserver.mapper.VisitorMapper;
 import seig.ljm.xkckserver.service.VisitorService;
-import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import org.springframework.stereotype.Service;
-import org.springframework.beans.factory.annotation.Autowired;
 
+import java.time.ZonedDateTime;
 import java.util.List;
-import java.util.Map;
-import java.time.LocalDateTime;
 
+/**
+ * 访客服务实现类
+ *
+ * @author ljm
+ * @since 2025-02-18
+ */
 @Service
+@RequiredArgsConstructor
 public class VisitorServiceImpl extends ServiceImpl<VisitorMapper, Visitor> implements VisitorService {
 
-    private VisitorMapper visitorMapper;
-    @Autowired
-    public VisitorServiceImpl(VisitorMapper visitorMapper) {
-        this.visitorMapper = visitorMapper;
-    }
+    private final VisitorMapper visitorMapper;
 
     @Override
-    public Visitor getByOpenId(String openId) {
-        return visitorMapper.selectByOpenId(openId);
-    }
-
-    @Override
-    public Page<Visitor> getVisitorPage(Integer pageNum, Integer pageSize, String status) {
-        Page<Visitor> page = new Page<>(pageNum, pageSize);
-        QueryWrapper<Visitor> queryWrapper = new QueryWrapper<>();
-        if (status != null && !status.isEmpty()) {
-            queryWrapper.eq("status", status);
+    @Transactional(rollbackFor = Exception.class)
+    public Visitor register(Visitor visitor) {
+        // 检查手机号是否已注册
+        if (getByPhone(visitor.getPhone()) != null) {
+            throw new RuntimeException("手机号已注册");
         }
-        return visitorMapper.selectPage(page, queryWrapper);
+
+        // 检查证件号码是否已注册
+        if (getByIdNumber(visitor.getIdNumber()) != null) {
+            throw new RuntimeException("证件号码已注册");
+        }
+
+        // 设置默认值
+        ZonedDateTime now = ZonedDateTime.now(TimeZoneConstant.ZONE_ID);
+        visitor.setRole("visitor");
+        visitor.setAccountStatus("normal");
+        visitor.setHidden(false);
+        visitor.setCreateTime(now);
+        visitor.setUpdateTime(now);
+
+        // 保存访客信息
+        save(visitor);
+        return visitor;
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public Visitor updateVisitor(Visitor visitor) {
+        // 检查访客是否存在
+        Visitor existingVisitor = getById(visitor.getVisitorId());
+        if (existingVisitor == null) {
+            throw new RuntimeException("访客不存在");
+        }
+
+        // 如果修改了手机号，检查新手机号是否被其他用户使用
+        if (!existingVisitor.getPhone().equals(visitor.getPhone())) {
+            Visitor phoneUser = getByPhone(visitor.getPhone());
+            if (phoneUser != null && !phoneUser.getVisitorId().equals(visitor.getVisitorId())) {
+                throw new RuntimeException("手机号已被其他用户使用");
+            }
+        }
+
+        // 如果修改了证件号码，检查新证件号码是否被其他用户使用
+        if (!existingVisitor.getIdNumber().equals(visitor.getIdNumber())) {
+            Visitor idNumberUser = getByIdNumber(visitor.getIdNumber());
+            if (idNumberUser != null && !idNumberUser.getVisitorId().equals(visitor.getVisitorId())) {
+                throw new RuntimeException("证件号码已被其他用户使用");
+            }
+        }
+
+        // 更新访客信息
+        visitor.setUpdateTime(ZonedDateTime.now(TimeZoneConstant.ZONE_ID));
+        updateById(visitor);
+        return visitor;
+    }
+
+    @Override
+    public IPage<Visitor> getVisitorPage(Integer current, Integer size, String role, String status) {
+        LambdaQueryWrapper<Visitor> wrapper = new LambdaQueryWrapper<>();
+        
+        // 添加查询条件
+        if (role != null) {
+            wrapper.eq(Visitor::getRole, role);
+        }
+        if (status != null) {
+            wrapper.eq(Visitor::getAccountStatus, status);
+        }
+        
+        // 只查询未隐藏的访客
+        wrapper.eq(Visitor::getHidden, false);
+        
+        // 按创建时间倒序排序
+        wrapper.orderByDesc(Visitor::getCreateTime);
+        
+        return page(new Page<>(current, size), wrapper);
+    }
+
+    @Override
+    public Visitor getByPhone(String phone) {
+        return visitorMapper.selectByPhone(phone);
     }
 
     @Override
@@ -43,25 +116,37 @@ public class VisitorServiceImpl extends ServiceImpl<VisitorMapper, Visitor> impl
     }
 
     @Override
-    public List<Visitor> getByHostDepartment(String department) {
-        return visitorMapper.selectByHostDepartment(department);
+    public Visitor getByWechatOpenId(String openId) {
+        return visitorMapper.selectByWechatOpenId(openId);
     }
 
     @Override
-    public List<Visitor> getByHostName(String hostName) {
-        return visitorMapper.selectByHostName(hostName);
+    @Transactional(rollbackFor = Exception.class)
+    public Boolean updateAccountStatus(Integer visitorId, String status) {
+        ZonedDateTime now = ZonedDateTime.now(TimeZoneConstant.ZONE_ID);
+        return visitorMapper.updateAccountStatus(visitorId, status, now) > 0;
     }
 
     @Override
-    public boolean updateVisitorStatus(Integer visitorId, String status) {
-        Visitor visitor = new Visitor();
-        visitor.setVisitorId(visitorId);
-        visitor.setStatus(status);
-        return updateById(visitor);
+    @Transactional(rollbackFor = Exception.class)
+    public Boolean updateLastLoginTime(Integer visitorId, ZonedDateTime loginTime) {
+        return visitorMapper.updateLastLoginTime(visitorId, loginTime) > 0;
     }
 
     @Override
-    public Map<String, Object> getVisitorStats(LocalDateTime startTime, LocalDateTime endTime) {
-        return visitorMapper.selectVisitorStats(startTime, endTime);
+    @Transactional(rollbackFor = Exception.class)
+    public Boolean deleteVisitor(Integer visitorId) {
+        ZonedDateTime now = ZonedDateTime.now(TimeZoneConstant.ZONE_ID);
+        return visitorMapper.softDelete(visitorId, now) > 0;
+    }
+
+    @Override
+    public List<Visitor> getAllAdmins() {
+        return visitorMapper.selectAllAdmins();
+    }
+
+    @Override
+    public List<Visitor> getAllBlacklisted() {
+        return visitorMapper.selectAllBlacklisted();
     }
 }

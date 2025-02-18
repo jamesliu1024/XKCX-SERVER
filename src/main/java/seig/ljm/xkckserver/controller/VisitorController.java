@@ -1,125 +1,111 @@
 package seig.ljm.xkckserver.controller;
 
-import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.baomidou.mybatisplus.core.metadata.IPage;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.format.annotation.DateTimeFormat;
-import org.springframework.http.ResponseEntity;
+import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
+import seig.ljm.xkckserver.common.ApiResult;
+import seig.ljm.xkckserver.constant.TimeZoneConstant;
 import seig.ljm.xkckserver.entity.Visitor;
 import seig.ljm.xkckserver.service.VisitorService;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
+import java.time.ZonedDateTime;
 import java.util.List;
-import java.util.Map;
 
+/**
+ * 访客管理控制器
+ *
+ * @author ljm
+ * @since 2025-02-18
+ */
 @RestController
 @RequestMapping("/visitor")
 @Tag(name = "Visitor", description = "访客信息")
+@RequiredArgsConstructor
 public class VisitorController {
 
-    @Autowired
-    private VisitorService visitorService;
+    private final VisitorService visitorService;
 
     @PostMapping("/register")
-    @Operation(summary = "访客注册")
-    public ResponseEntity<Visitor> registerVisitor(@RequestBody Visitor visitor) {
-        visitor.setCreateTime(LocalDateTime.now());
-        visitor.setStatus("pending");
-        visitorService.save(visitor);
-        return ResponseEntity.ok(visitor);
+    @Operation(summary = "注册访客", description = "注册新的访客用户")
+    public ApiResult<Visitor> register(@RequestBody Visitor visitor) {
+        return ApiResult.success(visitorService.register(visitor));
     }
 
-    @GetMapping("/{id}")
-    @Operation(summary = "获取访客详情")
-    public ResponseEntity<Visitor> getVisitor(
-            @Parameter(description = "访客ID") 
-            @PathVariable Integer id) {
-        Visitor visitor = visitorService.getById(id);
-        return ResponseEntity.ok(visitor);
-    }
-
-    @GetMapping("/openid/{openId}")
-    @Operation(summary = "根据微信OpenID查询访客")
-    public ResponseEntity<Visitor> getVisitorByOpenId(
-            @Parameter(description = "微信OpenID") 
-            @PathVariable String openId) {
-        Visitor visitor = visitorService.getByOpenId(openId);
-        return ResponseEntity.ok(visitor);
-    }
-
-    @GetMapping("/idNumber/{idNumber}")
-    @Operation(summary = "根据证件号码查询访客")
-    public ResponseEntity<Visitor> getVisitorByIdNumber(
-            @Parameter(description = "证件号码") 
-            @PathVariable String idNumber) {
-        Visitor visitor = visitorService.getByIdNumber(idNumber);
-        return ResponseEntity.ok(visitor);
-    }
-
-    @PutMapping("/{id}")
-    @Operation(summary = "更新访客信息")
-    public ResponseEntity<Boolean> updateVisitor(
-            @Parameter(description = "访客ID") 
-            @PathVariable Integer id,
+    @PutMapping("/{visitorId}")
+    @Operation(summary = "更新访客信息", description = "更新指定访客的信息")
+    public ApiResult<Visitor> updateVisitor(
+            @Parameter(description = "访客ID") @PathVariable Integer visitorId,
             @RequestBody Visitor visitor) {
-        visitor.setVisitorId(id);
-        boolean success = visitorService.updateById(visitor);
-        return ResponseEntity.ok(success);
-    }
-
-    @PutMapping("/{id}/status")
-    @Operation(summary = "更新访客状态")
-    public ResponseEntity<Boolean> updateVisitorStatus(
-            @Parameter(description = "访客ID") 
-            @PathVariable Integer id,
-            @Parameter(description = "新状态") 
-            @RequestParam String status) {
-        boolean success = visitorService.updateVisitorStatus(id, status);
-        return ResponseEntity.ok(success);
-    }
-
-    @GetMapping("/department/{department}")
-    @Operation(summary = "查询部门访客")
-    public ResponseEntity<List<Visitor>> getVisitorsByDepartment(
-            @Parameter(description = "部门名称") 
-            @PathVariable String department) {
-        List<Visitor> visitors = visitorService.getByHostDepartment(department);
-        return ResponseEntity.ok(visitors);
-    }
-
-    @GetMapping("/host/{hostName}")
-    @Operation(summary = "查询被访人的访客")
-    public ResponseEntity<List<Visitor>> getVisitorsByHost(
-            @Parameter(description = "被访人姓名") 
-            @PathVariable String hostName) {
-        List<Visitor> visitors = visitorService.getByHostName(hostName);
-        return ResponseEntity.ok(visitors);
+        visitor.setVisitorId(visitorId);
+        return ApiResult.success(visitorService.updateVisitor(visitor));
     }
 
     @GetMapping("/page")
-    @Operation(summary = "分页查询访客")
-    public ResponseEntity<Page<Visitor>> getVisitorPage(
-            @Parameter(description = "页码") 
-            @RequestParam(defaultValue = "1") Integer pageNum,
-            @Parameter(description = "每页大小") 
-            @RequestParam(defaultValue = "10") Integer pageSize,
-            @Parameter(description = "访客状态") 
-            @RequestParam(required = false) String status) {
-        Page<Visitor> page = visitorService.getVisitorPage(pageNum, pageSize, status);
-        return ResponseEntity.ok(page);
+    @Operation(summary = "分页查询访客", description = "支持按角色和状态筛选的分页查询")
+    public ApiResult<IPage<Visitor>> getVisitorPage(
+            @Parameter(description = "页码") @RequestParam(defaultValue = "1") Integer current,
+            @Parameter(description = "每页大小") @RequestParam(defaultValue = "10") Integer size,
+            @Parameter(description = "角色筛选") @RequestParam(required = false) String role,
+            @Parameter(description = "状态筛选") @RequestParam(required = false) String status) {
+        return ApiResult.success(visitorService.getVisitorPage(current, size, role, status));
     }
 
-    @GetMapping("/stats")
-    @Operation(summary = "获取访客统计信息")
-    public ResponseEntity<Map<String, Object>> getVisitorStats(
-            @Parameter(description = "开始时间") 
-            @RequestParam @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") LocalDateTime startTime,
-            @Parameter(description = "结束时间") 
-            @RequestParam @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") LocalDateTime endTime) {
-        Map<String, Object> stats = visitorService.getVisitorStats(startTime, endTime);
-        return ResponseEntity.ok(stats);
+    @GetMapping("/phone/{phone}")
+    @Operation(summary = "根据手机号查询", description = "根据手机号查询访客信息")
+    public ApiResult<Visitor> getByPhone(
+            @Parameter(description = "手机号") @PathVariable String phone) {
+        return ApiResult.success(visitorService.getByPhone(phone));
+    }
+
+    @GetMapping("/id-number/{idNumber}")
+    @Operation(summary = "根据证件号查询", description = "根据证件号码查询访客信息")
+    public ApiResult<Visitor> getByIdNumber(
+            @Parameter(description = "证件号码") @PathVariable String idNumber) {
+        return ApiResult.success(visitorService.getByIdNumber(idNumber));
+    }
+
+    @GetMapping("/wechat/{openId}")
+    @Operation(summary = "根据微信OpenID查询", description = "根据微信OpenID查询访客信息")
+    public ApiResult<Visitor> getByWechatOpenId(
+            @Parameter(description = "微信OpenID") @PathVariable String openId) {
+        return ApiResult.success(visitorService.getByWechatOpenId(openId));
+    }
+
+    @PutMapping("/{visitorId}/status")
+    @Operation(summary = "更新账号状态", description = "更新指定访客的账号状态")
+    public ApiResult<Boolean> updateAccountStatus(
+            @Parameter(description = "访客ID") @PathVariable Integer visitorId,
+            @Parameter(description = "新状态") @RequestParam String status) {
+        return ApiResult.success(visitorService.updateAccountStatus(visitorId, status));
+    }
+
+    @PutMapping("/{visitorId}/login-time")
+    @Operation(summary = "更新登录时间", description = "更新指定访客的最后登录时间")
+    public ApiResult<Boolean> updateLastLoginTime(
+            @Parameter(description = "访客ID") @PathVariable Integer visitorId) {
+        return ApiResult.success(visitorService.updateLastLoginTime(visitorId, ZonedDateTime.now(TimeZoneConstant.ZONE_ID)));
+    }
+
+    @DeleteMapping("/{visitorId}")
+    @Operation(summary = "删除访客", description = "软删除指定的访客")
+    public ApiResult<Boolean> deleteVisitor(
+            @Parameter(description = "访客ID") @PathVariable Integer visitorId) {
+        return ApiResult.success(visitorService.deleteVisitor(visitorId));
+    }
+
+    @GetMapping("/admins")
+    @Operation(summary = "获取管理员列表", description = "获取所有管理员用户列表")
+    public ApiResult<List<Visitor>> getAllAdmins() {
+        return ApiResult.success(visitorService.getAllAdmins());
+    }
+
+    @GetMapping("/blacklist")
+    @Operation(summary = "获取黑名单", description = "获取所有黑名单用户列表")
+    public ApiResult<List<Visitor>> getAllBlacklisted() {
+        return ApiResult.success(visitorService.getAllBlacklisted());
     }
 }
