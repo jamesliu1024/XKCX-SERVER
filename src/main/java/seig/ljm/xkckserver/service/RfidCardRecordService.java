@@ -16,28 +16,23 @@ import java.util.List;
 public interface RfidCardRecordService extends IService<RfidCardRecord> {
 
     /**
-     * 记录发卡操作
-     *
+     * 发放RFID卡片
      * @param cardId 卡片ID
      * @param reservationId 预约ID
      * @param adminId 管理员ID
-     * @param expirationTime 过期时间
      * @param remarks 备注
-     * @return 记录信息
+     * @return 卡片使用记录
      */
-    RfidCardRecord recordIssue(Integer cardId, Integer reservationId, Integer adminId, 
-                              ZonedDateTime expirationTime, String remarks);
+    RfidCardRecord issueCard(Integer cardId, Integer reservationId, Integer adminId, String remarks);
 
     /**
-     * 记录还卡操作
-     *
+     * 归还RFID卡片
      * @param cardId 卡片ID
-     * @param reservationId 预约ID
      * @param adminId 管理员ID
      * @param remarks 备注
-     * @return 记录信息
+     * @return 卡片使用记录
      */
-    RfidCardRecord recordReturn(Integer cardId, Integer reservationId, Integer adminId, String remarks);
+    RfidCardRecord returnCard(Integer cardId, Integer adminId, String remarks);
 
     /**
      * 记录挂失操作
@@ -110,9 +105,8 @@ public interface RfidCardRecordService extends IService<RfidCardRecord> {
 
     /**
      * 获取卡片最新的使用记录
-     *
      * @param cardId 卡片ID
-     * @return 记录信息
+     * @return 最新的使用记录
      */
     RfidCardRecord getLatestCardRecord(Integer cardId);
 

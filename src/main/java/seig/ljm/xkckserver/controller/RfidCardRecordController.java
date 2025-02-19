@@ -39,17 +39,16 @@ public class RfidCardRecordController {
             @Parameter(description = "管理员ID") @RequestParam Integer adminId,
             @Parameter(description = "过期时间") @RequestParam @DateTimeFormat(pattern = TimeZoneConstant.DATE_TIME_PATTERN) ZonedDateTime expirationTime,
             @Parameter(description = "备注") @RequestParam(required = false) String remarks) {
-        return ApiResult.success(rfidCardRecordService.recordIssue(cardId, reservationId, adminId, expirationTime, remarks));
+        return ApiResult.success(rfidCardRecordService.issueCard(cardId, reservationId, adminId, remarks));
     }
 
     @PostMapping("/return")
     @Operation(summary = "记录还卡", description = "记录RFID卡片的归还操作")
     public ApiResult<RfidCardRecord> recordReturn(
             @Parameter(description = "卡片ID") @RequestParam Integer cardId,
-            @Parameter(description = "预约ID") @RequestParam Integer reservationId,
             @Parameter(description = "管理员ID") @RequestParam Integer adminId,
             @Parameter(description = "备注") @RequestParam(required = false) String remarks) {
-        return ApiResult.success(rfidCardRecordService.recordReturn(cardId, reservationId, adminId, remarks));
+        return ApiResult.success(rfidCardRecordService.returnCard(cardId, adminId, remarks));
     }
 
     @PostMapping("/lost")

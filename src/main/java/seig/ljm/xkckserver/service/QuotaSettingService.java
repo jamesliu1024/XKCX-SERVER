@@ -97,4 +97,19 @@ public interface QuotaSettingService extends IService<QuotaSetting> {
      */
     Boolean batchSetQuota(LocalDate startDate, LocalDate endDate, Integer maxQuota,
                          Boolean isHoliday, String specialEvent);
+
+    /**
+     * 设置每日预约配额
+     * @param quotaSetting 配额设置
+     * @return 配额设置
+     */
+    QuotaSetting setQuota(QuotaSetting quotaSetting);
+
+    /**
+     * 获取配额设置列表
+     * @param startDate 开始日期
+     * @param endDate 结束日期
+     * @return 配额设置列表
+     */
+    List<QuotaSetting> listQuotas(LocalDate startDate, LocalDate endDate);
 }

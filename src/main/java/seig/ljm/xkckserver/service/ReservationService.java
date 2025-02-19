@@ -6,6 +6,7 @@ import seig.ljm.xkckserver.entity.Reservation;
 
 import java.time.ZonedDateTime;
 import java.util.List;
+import java.time.LocalDate;
 
 /**
  * 预约管理服务接口
@@ -164,4 +165,19 @@ public interface ReservationService extends IService<Reservation> {
      * @return 是否成功
      */
     Boolean restoreReservation(Integer reservationId);
+
+    /**
+     * 获取预约列表
+     * @param status 预约状态筛选
+     * @param date 日期筛选
+     * @return 预约列表
+     */
+    List<Reservation> listReservations(String status, LocalDate date);
+
+    /**
+     * 更新预约状态
+     * @param reservationId 预约ID
+     * @param status 新状态
+     */
+    void updateStatus(Integer reservationId, String status);
 }

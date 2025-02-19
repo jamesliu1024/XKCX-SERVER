@@ -14,8 +14,12 @@ import seig.ljm.xkckserver.mapper.AccessLogMapper;
 import seig.ljm.xkckserver.service.AccessDeviceService;
 import seig.ljm.xkckserver.service.AccessLogService;
 
+import java.time.LocalDate;
 import java.time.ZonedDateTime;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * 门禁日志服务实现类
@@ -27,10 +31,12 @@ import java.util.List;
 public class AccessLogServiceImpl extends ServiceImpl<AccessLogMapper, AccessLog> implements AccessLogService {
 
     private final AccessDeviceService accessDeviceService;
+    private final AccessLogMapper accessLogMapper;
 
     @Autowired
-    public AccessLogServiceImpl(@Lazy AccessDeviceService accessDeviceService) {
+    public AccessLogServiceImpl(@Lazy AccessDeviceService accessDeviceService, AccessLogMapper accessLogMapper) {
         this.accessDeviceService = accessDeviceService;
+        this.accessLogMapper = accessLogMapper;
     }
 
     @Override
@@ -224,5 +230,90 @@ public class AccessLogServiceImpl extends ServiceImpl<AccessLogMapper, AccessLog
         wrapper.eq(AccessLog::getReservationId, reservationId)
                .orderByDesc(AccessLog::getAccessTime);
         return list(wrapper);
+    }
+
+    @Override
+    public Map<String, Object> getStatistics(LocalDate startDate, LocalDate endDate) {
+        // 转换日期为时间戳
+        ZonedDateTime startDateTime = startDate.atStartOfDay(TimeZoneConstant.ZONE_ID);
+        ZonedDateTime endDateTime = endDate.plusDays(1).atStartOfDay(TimeZoneConstant.ZONE_ID);
+
+        // 查询指定时间范围内的所有记录
+        LambdaQueryWrapper<AccessLog> wrapper = new LambdaQueryWrapper<>();
+        wrapper.ge(AccessLog::getAccessTime, startDateTime)
+               .lt(AccessLog::getAccessTime, endDateTime)
+               .eq(AccessLog::getHidden, false);
+
+        List<AccessLog> logs = list(wrapper);
+
+        // 统计数据
+        Map<String, Object> statistics = new HashMap<>();
+        
+        // 总访问次数
+        statistics.put("totalVisits", logs.size());
+        
+        // 按进出类型统计
+        Map<String, Long> accessTypeStats = logs.stream()
+                .collect(Collectors.groupingBy(AccessLog::getAccessType, Collectors.counting()));
+        statistics.put("accessTypeStats", accessTypeStats);
+        
+        // 按结果统计
+        Map<String, Long> resultStats = logs.stream()
+                .collect(Collectors.groupingBy(AccessLog::getResult, Collectors.counting()));
+        statistics.put("resultStats", resultStats);
+        
+        // 按日期统计
+        Map<LocalDate, Long> dailyStats = logs.stream()
+                .collect(Collectors.groupingBy(
+                        log -> log.getAccessTime().toLocalDate(),
+                        Collectors.counting()
+                ));
+        statistics.put("dailyStats", dailyStats);
+
+        return statistics;
+    }
+
+    @Override
+    public Map<String, Object> getDeviceUsageStatistics(LocalDate startDate, LocalDate endDate) {
+        // 转换日期为时间戳
+        ZonedDateTime startDateTime = startDate.atStartOfDay(TimeZoneConstant.ZONE_ID);
+        ZonedDateTime endDateTime = endDate.plusDays(1).atStartOfDay(TimeZoneConstant.ZONE_ID);
+
+        // 查询指定时间范围内的所有记录
+        LambdaQueryWrapper<AccessLog> wrapper = new LambdaQueryWrapper<>();
+        wrapper.ge(AccessLog::getAccessTime, startDateTime)
+               .lt(AccessLog::getAccessTime, endDateTime)
+               .eq(AccessLog::getHidden, false);
+
+        List<AccessLog> logs = list(wrapper);
+
+        // 统计数据
+        Map<String, Object> statistics = new HashMap<>();
+        
+        // 按设备统计使用次数
+        Map<Integer, Long> deviceUsageCount = logs.stream()
+                .collect(Collectors.groupingBy(AccessLog::getDeviceId, Collectors.counting()));
+        statistics.put("deviceUsageCount", deviceUsageCount);
+        
+        // 按设备统计成功率
+        Map<Integer, Map<String, Long>> deviceSuccessRate = logs.stream()
+                .collect(Collectors.groupingBy(
+                        AccessLog::getDeviceId,
+                        Collectors.groupingBy(AccessLog::getResult, Collectors.counting())
+                ));
+        statistics.put("deviceSuccessRate", deviceSuccessRate);
+        
+        // 按设备和时间段统计
+        Map<Integer, Map<Integer, Long>> deviceHourlyStats = logs.stream()
+                .collect(Collectors.groupingBy(
+                        AccessLog::getDeviceId,
+                        Collectors.groupingBy(
+                                log -> log.getAccessTime().getHour(),
+                                Collectors.counting()
+                        )
+                ));
+        statistics.put("deviceHourlyStats", deviceHourlyStats);
+
+        return statistics;
     }
 }

@@ -6,6 +6,7 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import seig.ljm.xkckserver.common.constant.TimeZoneConstant;
@@ -22,6 +23,7 @@ import java.util.List;
  * @author ljm
  * @since 2025-02-18
  */
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class VisitorServiceImpl extends ServiceImpl<VisitorMapper, Visitor> implements VisitorService {
@@ -106,10 +108,9 @@ public class VisitorServiceImpl extends ServiceImpl<VisitorMapper, Visitor> impl
         return page(new Page<>(current, size), wrapper);
     }
 
-
     @Override
     public Visitor getByVisitorId(Integer visitorId) {
-        return visitorMapper.selectById(visitorId);
+        return getById(visitorId);
     }
 
     @Override
@@ -129,15 +130,27 @@ public class VisitorServiceImpl extends ServiceImpl<VisitorMapper, Visitor> impl
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public Boolean updateAccountStatus(Integer visitorId, String status) {
-        ZonedDateTime now = ZonedDateTime.now(TimeZoneConstant.ZONE_ID);
-        return visitorMapper.updateAccountStatus(visitorId, status, now) > 0;
+    public void updateAccountStatus(Integer visitorId, String status) {
+        Visitor visitor = getById(visitorId);
+        if (visitor != null) {
+            visitor.setAccountStatus(status);
+            visitor.setUpdateTime(ZonedDateTime.now(TimeZoneConstant.ZONE_ID));
+            updateById(visitor);
+            
+            log.info("Updated visitor {} account status to {}", visitorId, status);
+        } else {
+            log.warn("Visitor {} not found when updating account status", visitorId);
+        }
     }
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public Boolean updateLastLoginTime(Integer visitorId, ZonedDateTime loginTime) {
-        return visitorMapper.updateLastLoginTime(visitorId, loginTime) > 0;
+    public void updateLastLoginTime(Integer visitorId, ZonedDateTime lastLoginTime) {
+        Visitor visitor = getById(visitorId);
+        if (visitor != null) {
+            visitor.setLastLoginTime(lastLoginTime);
+            updateById(visitor);
+        }
     }
 
     @Override
@@ -159,6 +172,25 @@ public class VisitorServiceImpl extends ServiceImpl<VisitorMapper, Visitor> impl
 
     @Override
     public Visitor getVisitorByPhone(String phone) {
-        return baseMapper.selectOne(new QueryWrapper<Visitor>().eq("phone", phone));
+        return lambdaQuery()
+                .eq(Visitor::getPhone, phone)
+                .eq(Visitor::getHidden, false)
+                .one();
+    }
+
+    @Override
+    public List<Visitor> listVisitors(String role, String accountStatus) {
+        LambdaQueryWrapper<Visitor> wrapper = new LambdaQueryWrapper<>();
+        wrapper.eq(Visitor::getHidden, false);
+        
+        if (role != null && !role.isEmpty()) {
+            wrapper.eq(Visitor::getRole, role);
+        }
+        
+        if (accountStatus != null && !accountStatus.isEmpty()) {
+            wrapper.eq(Visitor::getAccountStatus, accountStatus);
+        }
+        
+        return list(wrapper);
     }
 }

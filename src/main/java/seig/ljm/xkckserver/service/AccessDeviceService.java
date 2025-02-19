@@ -2,6 +2,9 @@ package seig.ljm.xkckserver.service;
 
 import seig.ljm.xkckserver.entity.AccessDevice;
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+
+import java.util.List;
 
 /**
  * 门禁设备服务接口
@@ -61,4 +64,29 @@ public interface AccessDeviceService extends IService<AccessDevice> {
      * @return 更新结果
      */
     Boolean updateDeviceStatus(Integer deviceId, String status);
+
+    /**
+     * 获取门禁设备列表
+     * @param status 设备状态筛选
+     * @param type 设备类型筛选
+     * @return 设备列表
+     */
+    List<AccessDevice> listDevices(String status, String type);
+
+    /**
+     * 更新设备状态
+     * @param deviceId 设备ID
+     * @param status 新状态
+     */
+    void updateStatus(Integer deviceId, String status);
+
+    /**
+     * 分页查询设备列表
+     * @param current 当前页
+     * @param size 每页大小
+     * @param status 设备状态筛选
+     * @param type 设备类型筛选
+     * @return 分页结果
+     */
+    IPage<AccessDevice> getDevicePage(Integer current, Integer size, String status, String type);
 }

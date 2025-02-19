@@ -76,17 +76,19 @@ public class VisitorController {
 
     @PutMapping("/{visitorId}/status")
     @Operation(summary = "更新账号状态", description = "更新指定访客的账号状态")
-    public ApiResult<Boolean> updateAccountStatus(
+    public ApiResult<Void> updateAccountStatus(
             @Parameter(description = "访客ID") @PathVariable Integer visitorId,
             @Parameter(description = "新状态") @RequestParam String status) {
-        return ApiResult.success(visitorService.updateAccountStatus(visitorId, status));
+        visitorService.updateAccountStatus(visitorId, status);
+        return ApiResult.success();
     }
 
     @PutMapping("/{visitorId}/login-time")
     @Operation(summary = "更新登录时间", description = "更新指定访客的最后登录时间")
-    public ApiResult<Boolean> updateLastLoginTime(
+    public ApiResult<Void> updateLastLoginTime(
             @Parameter(description = "访客ID") @PathVariable Integer visitorId) {
-        return ApiResult.success(visitorService.updateLastLoginTime(visitorId, ZonedDateTime.now(TimeZoneConstant.ZONE_ID)));
+        visitorService.updateLastLoginTime(visitorId, ZonedDateTime.now(TimeZoneConstant.ZONE_ID));
+        return ApiResult.success();
     }
 
     @DeleteMapping("/{visitorId}")

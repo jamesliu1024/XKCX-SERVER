@@ -5,6 +5,7 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import seig.ljm.xkckserver.common.constant.TimeZoneConstant;
@@ -24,6 +25,7 @@ import java.util.List;
  * @author ljm
  * @since 2025-02-18
  */
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class ReservationServiceImpl extends ServiceImpl<ReservationMapper, Reservation> implements ReservationService {
@@ -200,6 +202,44 @@ public class ReservationServiceImpl extends ServiceImpl<ReservationMapper, Reser
         return update(Wrappers.lambdaUpdate(Reservation.class)
                 .eq(Reservation::getReservationId, reservationId)
                 .set(Reservation::getHidden, false));
+    }
+
+    @Override
+    public List<Reservation> listReservations(String status, LocalDate date) {
+        LambdaQueryWrapper<Reservation> wrapper = new LambdaQueryWrapper<>();
+        wrapper.eq(Reservation::getHidden, false);
+        
+        if (status != null && !status.isEmpty()) {
+            wrapper.eq(Reservation::getStatus, status);
+        }
+        
+        if (date != null) {
+            // 将LocalDate转换为当天的开始和结束时间
+            ZonedDateTime startOfDay = date.atStartOfDay(TimeZoneConstant.ZONE_ID);
+            ZonedDateTime endOfDay = date.plusDays(1).atStartOfDay(TimeZoneConstant.ZONE_ID);
+            
+            wrapper.ge(Reservation::getStartTime, startOfDay)
+                   .lt(Reservation::getStartTime, endOfDay);
+        }
+        
+        wrapper.orderByDesc(Reservation::getCreateTime);
+        
+        return list(wrapper);
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void updateStatus(Integer reservationId, String status) {
+        Reservation reservation = getById(reservationId);
+        if (reservation != null) {
+            reservation.setStatus(status);
+            reservation.setUpdateTime(ZonedDateTime.now(TimeZoneConstant.ZONE_ID));
+            updateById(reservation);
+            
+            log.info("Updated reservation {} status to {}", reservationId, status);
+        } else {
+            log.warn("Reservation {} not found when updating status", reservationId);
+        }
     }
 
     /**

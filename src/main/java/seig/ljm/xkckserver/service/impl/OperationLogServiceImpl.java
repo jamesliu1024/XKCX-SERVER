@@ -4,12 +4,15 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import seig.ljm.xkckserver.entity.OperationLog;
 import seig.ljm.xkckserver.mapper.OperationLogMapper;
 import seig.ljm.xkckserver.service.OperationLogService;
 import seig.ljm.xkckserver.common.constant.TimeZoneConstant;
 
+import java.time.LocalDate;
 import java.time.ZonedDateTime;
 import java.util.List;
 
@@ -21,8 +24,12 @@ import java.util.List;
  * @author ljm
  * @since 2025-02-18
  */
+@Slf4j
 @Service
+@RequiredArgsConstructor
 public class OperationLogServiceImpl extends ServiceImpl<OperationLogMapper, OperationLog> implements OperationLogService {
+
+    private final OperationLogMapper operationLogMapper;
 
     @Override
     public OperationLog recordOperation(OperationLog log) {
@@ -97,6 +104,27 @@ public class OperationLogServiceImpl extends ServiceImpl<OperationLogMapper, Ope
         LambdaQueryWrapper<OperationLog> wrapper = new LambdaQueryWrapper<>();
         wrapper.eq(OperationLog::getTargetId, targetId)
                .orderByDesc(OperationLog::getOperationTime);
+        return list(wrapper);
+    }
+
+    @Override
+    public List<OperationLog> listLogs(String operationType, LocalDate date) {
+        LambdaQueryWrapper<OperationLog> wrapper = new LambdaQueryWrapper<>();
+        
+        if (operationType != null && !operationType.isEmpty()) {
+            wrapper.eq(OperationLog::getOperationType, operationType);
+        }
+        
+        if (date != null) {
+            ZonedDateTime startOfDay = date.atStartOfDay(TimeZoneConstant.ZONE_ID);
+            ZonedDateTime endOfDay = date.plusDays(1).atStartOfDay(TimeZoneConstant.ZONE_ID);
+            
+            wrapper.ge(OperationLog::getOperationTime, startOfDay)
+                   .lt(OperationLog::getOperationTime, endOfDay);
+        }
+        
+        wrapper.orderByDesc(OperationLog::getOperationTime);
+        
         return list(wrapper);
     }
 }

@@ -75,23 +75,7 @@ public interface VisitorService extends IService<Visitor> {
      */
     Visitor getByWechatOpenId(String openId);
 
-    /**
-     * 更新访客账号状态
-     *
-     * @param visitorId 访客ID
-     * @param status    新状态
-     * @return 是否更新成功
-     */
-    Boolean updateAccountStatus(Integer visitorId, String status);
 
-    /**
-     * 更新访客最后登录时间
-     *
-     * @param visitorId  访客ID
-     * @param loginTime 登录时间
-     * @return 是否更新成功
-     */
-    Boolean updateLastLoginTime(Integer visitorId, ZonedDateTime loginTime);
 
     /**
      * 软删除访客
@@ -121,4 +105,26 @@ public interface VisitorService extends IService<Visitor> {
      * @return 访客信息
      */
     Visitor getVisitorByPhone(String phone);
+
+    /**
+     * 更新最后登录时间
+     * @param visitorId 访客ID
+     * @param lastLoginTime 最后登录时间
+     */
+    void updateLastLoginTime(Integer visitorId, ZonedDateTime lastLoginTime);
+
+    /**
+     * 获取访客列表
+     * @param role 角色筛选
+     * @param accountStatus 账号状态筛选
+     * @return 访客列表
+     */
+    List<Visitor> listVisitors(String role, String accountStatus);
+
+    /**
+     * 更新访客账号状态
+     * @param visitorId 访客ID
+     * @param status 新状态
+     */
+    void updateAccountStatus(Integer visitorId, String status);
 }

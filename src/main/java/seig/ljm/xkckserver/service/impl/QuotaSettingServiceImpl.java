@@ -5,6 +5,7 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import seig.ljm.xkckserver.common.constant.TimeZoneConstant;
@@ -23,11 +24,48 @@ import java.util.List;
  * @author ljm
  * @since 2025-02-18
  */
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class QuotaSettingServiceImpl extends ServiceImpl<QuotaSettingMapper, QuotaSetting> implements QuotaSettingService {
 
     private final QuotaSettingMapper quotaSettingMapper;
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public QuotaSetting setQuota(QuotaSetting quotaSetting) {
+        // 检查是否已存在该日期的配额设置
+        LambdaQueryWrapper<QuotaSetting> wrapper = new LambdaQueryWrapper<>();
+        wrapper.eq(QuotaSetting::getDate, quotaSetting.getDate());
+        
+        QuotaSetting existingQuota = getOne(wrapper);
+        if (existingQuota != null) {
+            // 更新现有配额设置
+            existingQuota.setMaxQuota(quotaSetting.getMaxQuota());
+            existingQuota.setIsHoliday(quotaSetting.getIsHoliday());
+            existingQuota.setSpecialEvent(quotaSetting.getSpecialEvent());
+            updateById(existingQuota);
+            
+            log.info("Updated quota setting for date {}", quotaSetting.getDate());
+            return existingQuota;
+        } else {
+            // 创建新的配额设置
+            save(quotaSetting);
+            
+            log.info("Created new quota setting for date {}", quotaSetting.getDate());
+            return quotaSetting;
+        }
+    }
+
+    @Override
+    public List<QuotaSetting> listQuotas(LocalDate startDate, LocalDate endDate) {
+        LambdaQueryWrapper<QuotaSetting> wrapper = new LambdaQueryWrapper<>();
+        wrapper.ge(QuotaSetting::getDate, startDate)
+               .le(QuotaSetting::getDate, endDate)
+               .orderByAsc(QuotaSetting::getDate);
+        
+        return list(wrapper);
+    }
 
     @Override
     @Transactional(rollbackFor = Exception.class)

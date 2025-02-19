@@ -5,13 +5,17 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import seig.ljm.xkckserver.common.constant.TimeZoneConstant;
+import seig.ljm.xkckserver.entity.RfidCard;
 import seig.ljm.xkckserver.entity.RfidCardRecord;
+import seig.ljm.xkckserver.entity.Reservation;
 import seig.ljm.xkckserver.mapper.RfidCardRecordMapper;
 import seig.ljm.xkckserver.service.RfidCardRecordService;
 import seig.ljm.xkckserver.service.RfidCardService;
+import seig.ljm.xkckserver.service.ReservationService;
 
 import java.time.ZonedDateTime;
 import java.util.List;
@@ -22,44 +26,83 @@ import java.util.List;
  * @author ljm
  * @since 2025-02-18
  */
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class RfidCardRecordServiceImpl extends ServiceImpl<RfidCardRecordMapper, RfidCardRecord> implements RfidCardRecordService {
 
     private final RfidCardRecordMapper rfidCardRecordMapper;
     private final RfidCardService rfidCardService;
+    private final ReservationService reservationService;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public RfidCardRecord recordIssue(Integer cardId, Integer reservationId, Integer adminId, 
-                                    ZonedDateTime expirationTime, String remarks) {
+    public RfidCardRecord issueCard(Integer cardId, Integer reservationId, Integer adminId, String remarks) {
+        // 获取预约信息
+        Reservation reservation = reservationService.getById(reservationId);
+        if (reservation == null) {
+            throw new RuntimeException("预约记录不存在");
+        }
+
+        // 获取卡片信息
+        RfidCard card = rfidCardService.getById(cardId);
+        if (card == null) {
+            throw new RuntimeException("卡片不存在");
+        }
+
+        // 检查卡片状态
+        if (!"available".equals(card.getStatus())) {
+            throw new RuntimeException("卡片状态不可用");
+        }
+
         // 创建发卡记录
         RfidCardRecord record = new RfidCardRecord();
         record.setCardId(cardId);
         record.setReservationId(reservationId);
         record.setAdminId(adminId);
         record.setOperationType("issue");
-        record.setExpirationTime(expirationTime);
+        record.setIssueTime(ZonedDateTime.now(TimeZoneConstant.ZONE_ID));
+        record.setExpirationTime(reservation.getEndTime());
         record.setRemarks(remarks);
         record.setCreateTime(ZonedDateTime.now(TimeZoneConstant.ZONE_ID));
         record.setHidden(false);
 
+        // 更新卡片状态
+        card.setStatus("issued");
+        rfidCardService.updateById(card);
+
         // 保存记录
         save(record);
-
-        // 更新卡片状态为已发放
-        rfidCardService.updateCardStatus(cardId, "issued", remarks);
-
+        
+        log.info("Issued card {} to reservation {}", cardId, reservationId);
+        
         return record;
     }
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public RfidCardRecord recordReturn(Integer cardId, Integer reservationId, Integer adminId, String remarks) {
+    public RfidCardRecord returnCard(Integer cardId, Integer adminId, String remarks) {
+        // 获取卡片信息
+        RfidCard card = rfidCardService.getById(cardId);
+        if (card == null) {
+            throw new RuntimeException("卡片不存在");
+        }
+
+        // 检查卡片状态
+        if (!"issued".equals(card.getStatus())) {
+            throw new RuntimeException("卡片未处于发放状态");
+        }
+
+        // 获取最新的发卡记录
+        RfidCardRecord latestRecord = getLatestCardRecord(cardId);
+        if (latestRecord == null) {
+            throw new RuntimeException("找不到发卡记录");
+        }
+
         // 创建还卡记录
         RfidCardRecord record = new RfidCardRecord();
         record.setCardId(cardId);
-        record.setReservationId(reservationId);
+        record.setReservationId(latestRecord.getReservationId());
         record.setAdminId(adminId);
         record.setOperationType("return");
         record.setReturnTime(ZonedDateTime.now(TimeZoneConstant.ZONE_ID));
@@ -67,12 +110,15 @@ public class RfidCardRecordServiceImpl extends ServiceImpl<RfidCardRecordMapper,
         record.setCreateTime(ZonedDateTime.now(TimeZoneConstant.ZONE_ID));
         record.setHidden(false);
 
+        // 更新卡片状态
+        card.setStatus("available");
+        rfidCardService.updateById(card);
+
         // 保存记录
         save(record);
-
-        // 更新卡片状态为可用
-        rfidCardService.updateCardStatus(cardId, "available", remarks);
-
+        
+        log.info("Returned card {}", cardId);
+        
         return record;
     }
 
@@ -170,7 +216,13 @@ public class RfidCardRecordServiceImpl extends ServiceImpl<RfidCardRecordMapper,
 
     @Override
     public RfidCardRecord getLatestCardRecord(Integer cardId) {
-        return rfidCardRecordMapper.getLatestCardRecord(cardId);
+        LambdaQueryWrapper<RfidCardRecord> wrapper = new LambdaQueryWrapper<>();
+        wrapper.eq(RfidCardRecord::getCardId, cardId)
+               .eq(RfidCardRecord::getHidden, false)
+               .orderByDesc(RfidCardRecord::getCreateTime)
+               .last("LIMIT 1");
+        
+        return getOne(wrapper);
     }
 
     @Override

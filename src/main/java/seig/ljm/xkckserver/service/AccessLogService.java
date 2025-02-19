@@ -6,6 +6,8 @@ import seig.ljm.xkckserver.entity.AccessLog;
 
 import java.time.ZonedDateTime;
 import java.util.List;
+import java.time.LocalDate;
+import java.util.Map;
 
 /**
  * <p>
@@ -132,4 +134,20 @@ public interface AccessLogService extends IService<AccessLog> {
      * @return 日志列表
      */
     List<AccessLog> getAllReservationLogs(Integer reservationId);
+
+    /**
+     * 获取进出统计数据
+     * @param startDate 开始日期
+     * @param endDate 结束日期
+     * @return 统计数据
+     */
+    Map<String, Object> getStatistics(LocalDate startDate, LocalDate endDate);
+
+    /**
+     * 获取设备使用统计
+     * @param startDate 开始日期
+     * @param endDate 结束日期
+     * @return 统计数据
+     */
+    Map<String, Object> getDeviceUsageStatistics(LocalDate startDate, LocalDate endDate);
 }

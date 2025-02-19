@@ -87,4 +87,11 @@ public interface RfidCardService extends IService<RfidCard> {
      * @return 是否更新成功
      */
     Boolean batchUpdateStatus(List<Integer> cardIds, String status);
+
+    /**
+     * 获取RFID卡片列表
+     * @param status 卡片状态筛选
+     * @return 卡片列表
+     */
+    List<RfidCard> listCards(String status);
 }

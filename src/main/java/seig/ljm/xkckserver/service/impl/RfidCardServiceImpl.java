@@ -5,6 +5,7 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import seig.ljm.xkckserver.common.constant.TimeZoneConstant;
@@ -21,6 +22,7 @@ import java.util.List;
  * @author ljm
  * @since 2025-02-18
  */
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class RfidCardServiceImpl extends ServiceImpl<RfidCardMapper, RfidCard> implements RfidCardService {
@@ -113,5 +115,18 @@ public class RfidCardServiceImpl extends ServiceImpl<RfidCardMapper, RfidCard> i
     @Transactional(rollbackFor = Exception.class)
     public Boolean batchUpdateStatus(List<Integer> cardIds, String status) {
         return rfidCardMapper.batchUpdateStatus(cardIds, status) > 0;
+    }
+
+    @Override
+    public List<RfidCard> listCards(String status) {
+        LambdaQueryWrapper<RfidCard> wrapper = new LambdaQueryWrapper<>();
+        
+        if (status != null && !status.isEmpty()) {
+            wrapper.eq(RfidCard::getStatus, status);
+        }
+        
+        wrapper.orderByDesc(RfidCard::getCreateTime);
+        
+        return list(wrapper);
     }
 }

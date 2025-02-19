@@ -6,6 +6,7 @@ import seig.ljm.xkckserver.entity.OperationLog;
 
 import java.time.ZonedDateTime;
 import java.util.List;
+import java.time.LocalDate;
 
 /**
  * 操作日志服务接口
@@ -66,4 +67,12 @@ public interface OperationLogService extends IService<OperationLog> {
      * @return 日志列表
      */
     List<OperationLog> getTargetLogs(Integer targetId);
+
+    /**
+     * 获取操作日志列表
+     * @param operationType 操作类型筛选
+     * @param date 日期筛选
+     * @return 操作日志列表
+     */
+    List<OperationLog> listLogs(String operationType, LocalDate date);
 }

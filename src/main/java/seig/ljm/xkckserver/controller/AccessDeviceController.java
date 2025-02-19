@@ -22,7 +22,7 @@ import static seig.ljm.xkckserver.common.constant.EnumConstant.Visitor.Role.*;
  */
 @RestController
 @RequestMapping("/api/accessDevice")
-@RequireRole(value = ADMIN)
+//@RequireRole(value = ADMIN)
 @Tag(name = "AccessDevice", description = "门禁设备")
 public class AccessDeviceController {
 
