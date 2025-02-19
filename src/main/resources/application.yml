@@ -52,6 +52,7 @@ springdoc:
 logging:
   level:
     com.baomidou.mybatisplus.samples.quickstart: debug
+    org.springframework.integration.mqtt: debug
 
 server:
   port: 8123
@@ -65,6 +66,4 @@ mqtt:
   username: admin
   password: public
   topics:
-    - xkck/device/+/status
-    - xkck/device/+/response
-    - xkck/device/+/heartbeat
+    - xkck/device/#

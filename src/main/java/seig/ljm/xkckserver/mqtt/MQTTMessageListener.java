@@ -24,12 +24,27 @@ public class MQTTMessageListener {
             public void handleMessage(Message<?> message) {
                 try {
                     String topic = message.getHeaders().get("mqtt_topic", String.class);
-                    String payload = new String((byte[]) message.getPayload());
+                    String payload;
                     
+                    // 处理不同类型的payload
+                    Object rawPayload = message.getPayload();
+                    if (rawPayload instanceof byte[]) {
+                        payload = new String((byte[]) rawPayload);
+                    } else if (rawPayload instanceof String) {
+                        payload = (String) rawPayload;
+                    } else {
+                        log.warn("Unexpected payload type: {}", rawPayload.getClass());
+                        payload = rawPayload.toString();
+                    }
+                    
+                    log.debug("Message headers: {}", message.getHeaders());
                     log.info("Received MQTT message - Topic: {}, Payload: {}", topic, payload);
+                    
                     mqttMessageService.handleMessage(topic, payload);
+                    
+                    log.debug("Successfully processed MQTT message");
                 } catch (Exception e) {
-                    log.error("Error handling message: ", e);
+                    log.error("Error handling MQTT message: {}", e.getMessage(), e);
                 }
             }
         };

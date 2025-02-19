@@ -14,7 +14,5 @@ public class StatusReportMessage extends BaseMessage {
         private String doorStatus; // open或closed
         private String lastCardRead;
         private Integer errorCode;
-//        private Integer temperature;
-//        private Integer battery;
     }
 } 
