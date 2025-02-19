@@ -41,7 +41,7 @@ springdoc:
     version: openapi_3_0
     enabled: true
   swagger-ui:
-    path: /swagger-ui/index.html
+    path: /swagger-ui.html
     operationsSorter: alpha # 按字母顺序排序操作
     tagsSorter: alpha # 按字母顺序排序标签
     docExpansion: none # 默认展开状态
@@ -67,3 +67,8 @@ mqtt:
   password: public
   topics:
     - xkck/device/#
+
+jwt:
+  secret: "XKCK-LJM-SEIG-SECRET"
+  expiration: 86400000  # 24小时
+

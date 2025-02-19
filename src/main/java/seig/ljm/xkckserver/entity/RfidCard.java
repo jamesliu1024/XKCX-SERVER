@@ -6,6 +6,7 @@ import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import io.swagger.v3.oas.annotations.media.Schema;
+import seig.ljm.xkckserver.common.constant.EnumConstant;
 import seig.ljm.xkckserver.common.constant.TimeZoneConstant;
 import java.io.Serializable;
 import java.time.ZonedDateTime;
@@ -48,4 +49,13 @@ public class RfidCard implements Serializable {
 
     @TableField("remarks")
     private String remarks;
+
+    // 枚举值转换方法
+    public void setStatus(String status) {
+        this.status = EnumConstant.RfidCard.STATUS.getOrDefault(status, status);
+    }
+
+    public String getStatus() {
+        return EnumConstant.RfidCard.STATUS_TEXT.getOrDefault(this.status, this.status);
+    }
 }

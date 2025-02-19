@@ -28,6 +28,9 @@ public class ApiResult<T> {
         this.data = data;
     }
     
+    public ApiResult() {
+    }
+    
     public static <T> ApiResult<T> success() {
         return new ApiResult<>(200, "操作成功", null);
     }
@@ -50,5 +53,12 @@ public class ApiResult<T> {
     
     public static <T> ApiResult<T> error(Integer code, String message) {
         return new ApiResult<>(code, message, null);
+    }
+
+    public static <T> ApiResult<T> fail(String message) {
+        ApiResult<T> result = new ApiResult<>();
+        result.setCode(500);
+        result.setMessage(message);
+        return result;
     }
 } 

@@ -32,9 +32,9 @@ public class AccessDeviceServiceImpl extends ServiceImpl<AccessDeviceMapper, Acc
     @Override
     public AccessDevice addDevice(AccessDevice device) {
         // 设置初始状态
-        device.setStatus("offline");
-        device.setDoorStatus("closed");
-        device.setLastHeartbeatTime(ZonedDateTime.now(TimeZoneConstant.ZONE_ID));
+//        device.setStatus("offline");
+//        device.setDoorStatus("closed");
+//        device.setLastHeartbeatTime(ZonedDateTime.now(TimeZoneConstant.ZONE_ID));
         save(device);
         return device;
     }

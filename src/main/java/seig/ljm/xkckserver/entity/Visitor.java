@@ -6,6 +6,7 @@ import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import io.swagger.v3.oas.annotations.media.Schema;
+import seig.ljm.xkckserver.common.constant.EnumConstant;
 import seig.ljm.xkckserver.common.constant.TimeZoneConstant;
 import java.io.Serializable;
 import java.time.ZonedDateTime;
@@ -24,7 +25,7 @@ import lombok.ToString;
 @Setter
 @ToString
 @TableName("visitor")
-@Schema(name = "Visitor", description = "")
+@Schema(name = "Visitor", description = "访客信息")
 public class Visitor implements Serializable {
 
     private static final long serialVersionUID = 1L;
@@ -70,4 +71,29 @@ public class Visitor implements Serializable {
     @TableField("update_time")
     @JsonFormat(pattern = TimeZoneConstant.DATE_TIME_PATTERN, timezone = TimeZoneConstant.ZONE_NAME)
     private ZonedDateTime updateTime;
+
+    // 枚举值转换方法
+    public void setIdType(String idType) {
+        this.idType = EnumConstant.Visitor.ID_TYPE.getOrDefault(idType, idType);
+    }
+
+    public String getIdType() {
+        return EnumConstant.Visitor.ID_TYPE_TEXT.getOrDefault(this.idType, this.idType);
+    }
+
+    public void setRole(String role) {
+        this.role = EnumConstant.Visitor.ROLE.getOrDefault(role, role);
+    }
+
+    public String getRole() {
+        return EnumConstant.Visitor.ROLE_TEXT.getOrDefault(this.role, this.role);
+    }
+
+    public void setAccountStatus(String accountStatus) {
+        this.accountStatus = EnumConstant.Visitor.ACCOUNT_STATUS.getOrDefault(accountStatus, accountStatus);
+    }
+
+    public String getAccountStatus() {
+        return EnumConstant.Visitor.ACCOUNT_STATUS_TEXT.getOrDefault(this.accountStatus, this.accountStatus);
+    }
 }

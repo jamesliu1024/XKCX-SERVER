@@ -42,6 +42,15 @@ public interface VisitorService extends IService<Visitor> {
      */
     IPage<Visitor> getVisitorPage(Integer current, Integer size, String role, String status);
 
+
+    /**
+     * 根据访客ID查询访客
+     *
+     * @param visitorId 访客ID
+     * @return 访客信息
+     */
+    Visitor getByVisitorId(Integer visitorId);
+
     /**
      * 根据手机号查询访客
      *
@@ -105,4 +114,11 @@ public interface VisitorService extends IService<Visitor> {
      * @return 黑名单用户列表
      */
     List<Visitor> getAllBlacklisted();
+
+    /**
+     * 根据手机号查找访客
+     * @param phone 手机号
+     * @return 访客信息
+     */
+    Visitor getVisitorByPhone(String phone);
 }

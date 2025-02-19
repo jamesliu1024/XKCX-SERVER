@@ -6,6 +6,7 @@ import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import io.swagger.v3.oas.annotations.media.Schema;
+import seig.ljm.xkckserver.common.constant.EnumConstant;
 import seig.ljm.xkckserver.common.constant.TimeZoneConstant;
 import java.io.Serializable;
 import java.time.ZonedDateTime;
@@ -53,4 +54,13 @@ public class OperationLog implements Serializable {
     @TableField(value = "details", typeHandler = com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler.class)
     @Schema(description = "操作详情（JSON格式）")
     private Object details;
+
+    // 枚举值转换方法
+    public void setOperationType(String operationType) {
+        this.operationType = EnumConstant.OperationLog.OPERATION_TYPE.getOrDefault(operationType, operationType);
+    }
+
+    public String getOperationType() {
+        return EnumConstant.OperationLog.OPERATION_TYPE_TEXT.getOrDefault(this.operationType, this.operationType);
+    }
 }

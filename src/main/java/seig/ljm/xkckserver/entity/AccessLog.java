@@ -6,6 +6,7 @@ import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import io.swagger.v3.oas.annotations.media.Schema;
+import seig.ljm.xkckserver.common.constant.EnumConstant;
 import seig.ljm.xkckserver.common.constant.TimeZoneConstant;
 import java.io.Serializable;
 import java.time.ZonedDateTime;
@@ -59,4 +60,22 @@ public class AccessLog implements Serializable {
 
     @TableField("hidden")
     private Boolean hidden;
+
+    // 枚举值转换方法
+    public void setAccessType(String accessType) {
+        this.accessType = EnumConstant.AccessLog.ACCESS_TYPE.getOrDefault(accessType, accessType);
+    }
+
+    public String getAccessType() {
+        return EnumConstant.AccessLog.ACCESS_TYPE_TEXT.getOrDefault(this.accessType, this.accessType);
+    }
+
+    public void setResult(String result) {
+        this.result = EnumConstant.AccessLog.RESULT.getOrDefault(result, result);
+    }
+
+    public String getResult() {
+        return EnumConstant.AccessLog.RESULT_TEXT.getOrDefault(this.result, this.result);
+    }    
+    
 }

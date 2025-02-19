@@ -6,6 +6,7 @@ import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import io.swagger.v3.oas.annotations.media.Schema;
+import seig.ljm.xkckserver.common.constant.EnumConstant;
 import seig.ljm.xkckserver.common.constant.TimeZoneConstant;
 import java.io.Serializable;
 import java.time.ZonedDateTime;
@@ -59,4 +60,30 @@ public class AccessDevice implements Serializable {
 
     @TableField("description")
     private String description;
+
+    // 枚举值转换方法
+    public void setStatus(String status) {
+        this.status = EnumConstant.AccessDevice.STATUS.getOrDefault(status, status);
+    }
+
+    public String getStatus() {
+        return EnumConstant.AccessDevice.STATUS_TEXT.getOrDefault(this.status, this.status);
+    }
+
+    public void setDeviceType(String deviceType) {
+        this.deviceType = EnumConstant.AccessDevice.DEVICE_TYPE.getOrDefault(deviceType, deviceType);
+    }
+
+    public String getDeviceType() {
+        return EnumConstant.AccessDevice.DEVICE_TYPE_TEXT.getOrDefault(this.deviceType, this.deviceType);
+    }
+
+    public void setDoorStatus(String doorStatus) {
+        this.doorStatus = EnumConstant.AccessDevice.DOOR_STATUS.getOrDefault(doorStatus, doorStatus);
+    }
+
+    public String getDoorStatus() {
+        return EnumConstant.AccessDevice.DOOR_STATUS_TEXT.getOrDefault(this.doorStatus, this.doorStatus);
+    }
+    
 }

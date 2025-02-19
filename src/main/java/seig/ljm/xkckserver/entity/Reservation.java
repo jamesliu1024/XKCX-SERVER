@@ -6,6 +6,7 @@ import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import io.swagger.v3.oas.annotations.media.Schema;
+import seig.ljm.xkckserver.common.constant.EnumConstant;
 import seig.ljm.xkckserver.common.constant.TimeZoneConstant;
 import java.io.Serializable;
 import java.time.ZonedDateTime;
@@ -71,4 +72,21 @@ public class Reservation implements Serializable {
 
     @TableField("hidden")
     private Boolean hidden;
+
+    // 枚举值转换方法
+    public void setHostConfirm(String hostConfirm) {
+        this.hostConfirm = EnumConstant.Reservation.HOST_CONFIRM.getOrDefault(hostConfirm, hostConfirm);
+    }
+
+    public String getHostConfirm() {
+        return EnumConstant.Reservation.HOST_CONFIRM_TEXT.getOrDefault(this.hostConfirm, this.hostConfirm);
+    }
+
+    public void setStatus(String status) {
+        this.status = EnumConstant.Reservation.STATUS.getOrDefault(status, status);
+    }
+
+    public String getStatus() {
+        return EnumConstant.Reservation.STATUS_TEXT.getOrDefault(this.status, this.status);
+    }
 }

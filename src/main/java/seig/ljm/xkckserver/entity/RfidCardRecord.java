@@ -6,6 +6,7 @@ import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import io.swagger.v3.oas.annotations.media.Schema;
+import seig.ljm.xkckserver.common.constant.EnumConstant;
 import seig.ljm.xkckserver.common.constant.TimeZoneConstant;
 import java.io.Serializable;
 import java.time.ZonedDateTime;
@@ -65,4 +66,13 @@ public class RfidCardRecord implements Serializable {
 
     @TableField("hidden")
     private Boolean hidden;
+
+    // 枚举值转换方法
+    public void setOperationType(String operationType) {
+        this.operationType = EnumConstant.RfidCardRecord.OPERATION_TYPE.getOrDefault(operationType, operationType);
+    }
+
+    public String getOperationType() {
+        return EnumConstant.RfidCardRecord.OPERATION_TYPE_TEXT.getOrDefault(this.operationType, this.operationType);
+    }
 }

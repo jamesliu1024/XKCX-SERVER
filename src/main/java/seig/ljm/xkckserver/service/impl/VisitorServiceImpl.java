@@ -1,6 +1,7 @@
 package seig.ljm.xkckserver.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
@@ -105,6 +106,12 @@ public class VisitorServiceImpl extends ServiceImpl<VisitorMapper, Visitor> impl
         return page(new Page<>(current, size), wrapper);
     }
 
+
+    @Override
+    public Visitor getByVisitorId(Integer visitorId) {
+        return visitorMapper.selectById(visitorId);
+    }
+
     @Override
     public Visitor getByPhone(String phone) {
         return visitorMapper.selectByPhone(phone);
@@ -147,6 +154,11 @@ public class VisitorServiceImpl extends ServiceImpl<VisitorMapper, Visitor> impl
 
     @Override
     public List<Visitor> getAllBlacklisted() {
-        return visitorMapper.selectAllBlacklisted();
+        return baseMapper.selectList(new QueryWrapper<Visitor>().eq("account_status", "blacklisted"));
+    }
+
+    @Override
+    public Visitor getVisitorByPhone(String phone) {
+        return baseMapper.selectOne(new QueryWrapper<Visitor>().eq("phone", phone));
     }
 }
