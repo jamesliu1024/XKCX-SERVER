@@ -187,7 +187,7 @@ INSERT INTO visitor (
     name, phone, id_type, id_number, role, account_status, 
     password_hash, create_time
 ) VALUES (
-    '阿明', '13800138001', 'id_card', 'ADMIN001', 
+    '阿明', '1', 'id_card', 'ADMIN001',
     'admin', 'normal',
     'pmWkWSBCL51Bfkhn79xPuKBKHz//H6B+mY6G9/eieuM=', -- SHA256：123
     '2025-01-01 00:00:00'
@@ -227,7 +227,7 @@ INSERT INTO visitor (
     name, phone, id_type, id_number, role, 
     account_status, password_hash, create_time
 ) VALUES (
-    '小明', '13800138099', 'id_card', '440101199001011234',
+    '小明', '2', 'id_card', '440101199001011234',
     'visitor', 'normal',
     'pmWkWSBCL51Bfkhn79xPuKBKHz//H6B+mY6G9/eieuM=', -- SHA256：123
     '2025-02-09 10:30:00'

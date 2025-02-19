@@ -69,6 +69,6 @@ mqtt:
     - xkck/device/#
 
 jwt:
-  secret: "XKCK-LJM-SEIG-SECRET"
+  secret: "XKCK-LJM-SEIG-SECRET-KEY-2025-GRADUATION-PROJECT-SECURE-KEY-32BYTES"
   expiration: 86400000  # 24小时
 

@@ -8,183 +8,251 @@ import java.util.Map;
  */
 public class EnumConstant {
     // 访客表枚举
+    
     public static final class Visitor {
         // 证件类型
+        public static final class IdType {
+            public static final String SCHOOL_ID = "school_id";
+            public static final String ID_CARD = "id_card";
+            public static final String PASSPORT = "passport";
+            public static final String OTHER = "other";
+        }
         public static final Map<String, String> ID_TYPE = new HashMap<>() {{
-            put("school_id", "1");
-            put("id_card", "2");
-            put("passport", "3");
-            put("other", "4");
+            put(IdType.SCHOOL_ID, "1");
+            put(IdType.ID_CARD, "2");
+            put(IdType.PASSPORT, "3");
+            put(IdType.OTHER, "4");
         }};
         public static final Map<String, String> ID_TYPE_TEXT = new HashMap<>() {{
-            put("1", "school_id");
-            put("2", "id_card");
-            put("3", "passport");
-            put("4", "other");
+            put("1", IdType.SCHOOL_ID);
+            put("2", IdType.ID_CARD);
+            put("3", IdType.PASSPORT);
+            put("4", IdType.OTHER);
         }};
-
+        
         // 角色
+        public static final class Role {
+            public static final String ADMIN = "admin";
+            public static final String VISITOR = "visitor";
+        }
         public static final Map<String, String> ROLE = new HashMap<>() {{
-            put("admin", "1");
-            put("visitor", "2");
+            put(Role.ADMIN, "1");
+            put(Role.VISITOR, "2");
         }};
         public static final Map<String, String> ROLE_TEXT = new HashMap<>() {{
-            put("1", "admin");
-            put("2", "visitor");
+            put("1", Role.ADMIN);
+            put("2", Role.VISITOR);
         }};
 
         // 账号状态
+        public static final class AccountStatus {
+            public static final String NORMAL = "normal";
+            public static final String DISABLED = "disabled";
+            public static final String BLACKLIST = "blacklist";
+        }
         public static final Map<String, String> ACCOUNT_STATUS = new HashMap<>() {{
-            put("normal", "1");
-            put("disabled", "2");
-            put("blacklist", "3");
+            put(AccountStatus.NORMAL, "1");
+            put(AccountStatus.DISABLED, "2");
+            put(AccountStatus.BLACKLIST, "3");
         }};
         public static final Map<String, String> ACCOUNT_STATUS_TEXT = new HashMap<>() {{
-            put("1", "normal");
-            put("2", "disabled");
-            put("3", "blacklist");
+            put("1", AccountStatus.NORMAL);
+            put("2", AccountStatus.DISABLED);
+            put("3", AccountStatus.BLACKLIST);
         }};
     }
 
     // 门禁设备表枚举
     public static final class AccessDevice {
         // 设备状态
+        public static final class Status {
+            public static final String ONLINE = "online";
+            public static final String OFFLINE = "offline";
+            public static final String MAINTENANCE = "maintenance";
+        }
         public static final Map<String, String> STATUS = new HashMap<>() {{
-            put("online", "1");
-            put("offline", "2");
-            put("maintenance", "3");
+            put(Status.ONLINE, "1");
+            put(Status.OFFLINE, "2");
+            put(Status.MAINTENANCE, "3");
         }};
         public static final Map<String, String> STATUS_TEXT = new HashMap<>() {{
-            put("1", "online");
-            put("2", "offline");
-            put("3", "maintenance");
+            put("1", Status.ONLINE);
+            put("2", Status.OFFLINE);
+            put("3", Status.MAINTENANCE);
         }};
 
         // 设备类型
+        public static final class DeviceType {
+            public static final String CAMPUS_GATE = "campus_gate";
+            public static final String FACILITY_GATE = "facility_gate";
+            public static final String MANAGEMENT = "management";
+        }
         public static final Map<String, String> DEVICE_TYPE = new HashMap<>() {{
-            put("campus_gate", "1");
-            put("facility_gate", "2");
-            put("management", "3");
+            put(DeviceType.CAMPUS_GATE, "1");
+            put(DeviceType.FACILITY_GATE, "2");
+            put(DeviceType.MANAGEMENT, "3");
         }};
         public static final Map<String, String> DEVICE_TYPE_TEXT = new HashMap<>() {{
-            put("1", "campus_gate");
-            put("2", "facility_gate");
-            put("3", "management");
+            put("1", DeviceType.CAMPUS_GATE);
+            put("2", DeviceType.FACILITY_GATE);
+            put("3", DeviceType.MANAGEMENT);
         }};
 
         // 门禁状态
+        public static final class DoorStatus {
+            public static final String OPEN = "open";
+            public static final String CLOSED = "closed";
+        }
         public static final Map<String, String> DOOR_STATUS = new HashMap<>() {{
-            put("open", "1");
-            put("closed", "2");
+            put(DoorStatus.OPEN, "1");
+            put(DoorStatus.CLOSED, "2");
         }};
         public static final Map<String, String> DOOR_STATUS_TEXT = new HashMap<>() {{
-            put("1", "open");
-            put("2", "closed");
+            put("1", DoorStatus.OPEN);
+            put("2", DoorStatus.CLOSED);
         }};
     }
 
     // 预约表枚举
     public static final class Reservation {
         // 被访人确认状态
+        public static final class HostConfirm {
+            public static final String PENDING = "pending";
+            public static final String CONFIRMED = "confirmed";
+            public static final String REJECTED = "rejected";
+        }
         public static final Map<String, String> HOST_CONFIRM = new HashMap<>() {{
-            put("pending", "1");
-            put("confirmed", "2");
-            put("rejected", "3");
+            put(HostConfirm.PENDING, "1");
+            put(HostConfirm.CONFIRMED, "2");
+            put(HostConfirm.REJECTED, "3");
         }};
         public static final Map<String, String> HOST_CONFIRM_TEXT = new HashMap<>() {{
-            put("1", "pending");
-            put("2", "confirmed");
-            put("3", "rejected");
+            put("1", HostConfirm.PENDING);
+            put("2", HostConfirm.CONFIRMED);
+            put("3", HostConfirm.REJECTED);
         }};
 
         // 预约状态
+        public static final class Status {
+            public static final String PENDING = "pending";
+            public static final String CONFIRMED = "confirmed";
+            public static final String USED = "used";
+            public static final String CANCELED = "canceled";
+        }
         public static final Map<String, String> STATUS = new HashMap<>() {{
-            put("pending", "1");
-            put("confirmed", "2");
-            put("used", "3");
-            put("canceled", "4");
+            put(Status.PENDING, "1");
+            put(Status.CONFIRMED, "2");
+            put(Status.USED, "3");
+            put(Status.CANCELED, "4");
         }};
         public static final Map<String, String> STATUS_TEXT = new HashMap<>() {{
-            put("1", "pending");
-            put("2", "confirmed");
-            put("3", "used");
-            put("4", "canceled");
+            put("1", Status.PENDING);
+            put("2", Status.CONFIRMED);
+            put("3", Status.USED);
+            put("4", Status.CANCELED);
         }};
     }
 
     // RFID卡表枚举
     public static final class RfidCard {
         // 卡片状态
+        public static final class Status {
+            public static final String AVAILABLE = "available";
+            public static final String ISSUED = "issued";
+            public static final String LOST = "lost";
+            public static final String DEACTIVATED = "deactivated";
+            public static final String DAMAGE = "damage";
+        }
         public static final Map<String, String> STATUS = new HashMap<>() {{
-            put("available", "1");
-            put("issued", "2");
-            put("lost", "3");
-            put("deactivated", "4");
-            put("damage", "5");
+            put(Status.AVAILABLE, "1");
+            put(Status.ISSUED, "2");
+            put(Status.LOST, "3");
+            put(Status.DEACTIVATED, "4");
+            put(Status.DAMAGE, "5");
         }};
         public static final Map<String, String> STATUS_TEXT = new HashMap<>() {{
-            put("1", "available");
-            put("2", "issued");
-            put("3", "lost");
-            put("4", "deactivated");
-            put("5", "damage");
+            put("1", Status.AVAILABLE);
+            put("2", Status.ISSUED);
+            put("3", Status.LOST);
+            put("4", Status.DEACTIVATED);
+            put("5", Status.DAMAGE);
         }};
     }
 
     // RFID卡使用记录表枚举
     public static final class RfidCardRecord {
         // 操作类型
+        public static final class OperationType {
+            public static final String ISSUE = "issue";
+            public static final String RETURN = "return";
+            public static final String REPORT_LOST = "report_lost";
+            public static final String DEACTIVATE = "deactivate";
+        }
         public static final Map<String, String> OPERATION_TYPE = new HashMap<>() {{
-            put("issue", "1");
-            put("return", "2");
-            put("report_lost", "3");
-            put("deactivate", "4");
+            put(OperationType.ISSUE, "1");
+            put(OperationType.RETURN, "2");
+            put(OperationType.REPORT_LOST, "3");
+            put(OperationType.DEACTIVATE, "4");
         }};
         public static final Map<String, String> OPERATION_TYPE_TEXT = new HashMap<>() {{
-            put("1", "issue");
-            put("2", "return");
-            put("3", "report_lost");
-            put("4", "deactivate");
+            put("1", OperationType.ISSUE);
+            put("2", OperationType.RETURN);
+            put("3", OperationType.REPORT_LOST);
+            put("4", OperationType.DEACTIVATE);
         }};
     }
 
     // 进出记录表枚举
     public static final class AccessLog {
         // 进出类型
+        public static final class AccessType {
+            public static final String ENTRY = "entry";
+            public static final String EXIT = "exit";
+        }
         public static final Map<String, String> ACCESS_TYPE = new HashMap<>() {{
-            put("entry", "1");
-            put("exit", "2");
+            put(AccessType.ENTRY, "1");
+            put(AccessType.EXIT, "2");
         }};
         public static final Map<String, String> ACCESS_TYPE_TEXT = new HashMap<>() {{
-            put("1", "entry");
-            put("2", "exit");
+            put("1", AccessType.ENTRY);
+            put("2", AccessType.EXIT);
         }};
 
         // 访问结果
+        public static final class Result {
+            public static final String ALLOWED = "allowed";
+            public static final String DENIED = "denied";
+        }
         public static final Map<String, String> RESULT = new HashMap<>() {{
-            put("allowed", "1");
-            put("denied", "2");
+            put(Result.ALLOWED, "1");
+            put(Result.DENIED, "2");
         }};
         public static final Map<String, String> RESULT_TEXT = new HashMap<>() {{
-            put("1", "allowed");
-            put("2", "denied");
+            put("1", Result.ALLOWED);
+            put("2", Result.DENIED);
         }};
     }
 
     // 操作日志表枚举
     public static final class OperationLog {
         // 操作类型
+        public static final class OperationType {
+            public static final String ISSUE = "issue";
+            public static final String RETURN = "return";
+            public static final String REPORT_LOST = "report_lost";
+            public static final String DEACTIVATE = "deactivate";
+        }
         public static final Map<String, String> OPERATION_TYPE = new HashMap<>() {{
-            put("issue", "1");
-            put("return", "2");
-            put("report_lost", "3");
-            put("deactivate", "4");
+            put(OperationType.ISSUE, "1");
+            put(OperationType.RETURN, "2");
+            put(OperationType.REPORT_LOST, "3");
+            put(OperationType.DEACTIVATE, "4");
         }};
         public static final Map<String, String> OPERATION_TYPE_TEXT = new HashMap<>() {{
-            put("1", "issue");
-            put("2", "return");
-            put("3", "report_lost");
-            put("4", "deactivate");
+            put("1", OperationType.ISSUE);
+            put("2", OperationType.RETURN);
+            put("3", OperationType.REPORT_LOST);
+            put("4", OperationType.DEACTIVATE);
         }};
     }
 } 

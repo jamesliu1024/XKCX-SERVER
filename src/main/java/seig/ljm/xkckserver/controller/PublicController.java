@@ -106,7 +106,8 @@ public class PublicController {
     private String hashPassword(String password) {
         try {
             // salt
-            String salt = "xkck-ljm-seig";
+//            String salt = "xkck-ljm-seig";
+            String salt = "";
             StringBuilder sb = new StringBuilder();
             sb.append(salt);
             sb.append(password);

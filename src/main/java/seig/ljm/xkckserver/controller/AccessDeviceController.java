@@ -6,10 +6,13 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 import seig.ljm.xkckserver.common.api.ApiResult;
+import seig.ljm.xkckserver.common.security.RequireRole;
 import seig.ljm.xkckserver.entity.AccessDevice;
 import seig.ljm.xkckserver.service.AccessDeviceService;
 
 import java.util.List;
+
+import static seig.ljm.xkckserver.common.constant.EnumConstant.Visitor.Role.*;
 
 /**
  * 门禁设备控制器
@@ -18,7 +21,8 @@ import java.util.List;
  * @since 2025-02-18
  */
 @RestController
-@RequestMapping("/accessDevice")
+@RequestMapping("/api/accessDevice")
+@RequireRole(value = ADMIN)
 @Tag(name = "AccessDevice", description = "门禁设备")
 public class AccessDeviceController {
 
