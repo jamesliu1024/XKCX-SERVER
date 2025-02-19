@@ -6,7 +6,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
-import seig.ljm.xkckserver.constant.TimeZoneConstant;
+import seig.ljm.xkckserver.common.constant.TimeZoneConstant;
 import seig.ljm.xkckserver.entity.AccessDevice;
 import seig.ljm.xkckserver.entity.AccessLog;
 import seig.ljm.xkckserver.entity.MessageLog;
@@ -16,8 +16,6 @@ import seig.ljm.xkckserver.mqtt.MQTTGateway;
 import seig.ljm.xkckserver.mqtt.dto.*;
 import seig.ljm.xkckserver.service.*;
 
-import java.time.LocalDateTime;
-import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 
 @Slf4j

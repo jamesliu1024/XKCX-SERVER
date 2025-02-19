@@ -15,7 +15,7 @@ import java.time.ZonedDateTime;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
-import seig.ljm.xkckserver.constant.TimeZoneConstant;
+import seig.ljm.xkckserver.common.constant.TimeZoneConstant;
 
 /**
  * <p>

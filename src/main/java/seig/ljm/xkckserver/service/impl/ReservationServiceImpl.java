@@ -7,19 +7,15 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import seig.ljm.xkckserver.constant.TimeZoneConstant;
+import seig.ljm.xkckserver.common.constant.TimeZoneConstant;
 import seig.ljm.xkckserver.entity.Reservation;
 import seig.ljm.xkckserver.mapper.ReservationMapper;
 import seig.ljm.xkckserver.service.QuotaSettingService;
 import seig.ljm.xkckserver.service.ReservationService;
-import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
-import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 
 import java.time.ZonedDateTime;
 import java.time.LocalDate;
-import java.time.ZoneId;
-import java.time.ZonedDateTime;
 import java.util.List;
 
 /**

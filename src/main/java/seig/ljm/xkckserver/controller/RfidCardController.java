@@ -6,7 +6,7 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
-import seig.ljm.xkckserver.common.ApiResult;
+import seig.ljm.xkckserver.common.api.ApiResult;
 import seig.ljm.xkckserver.entity.RfidCard;
 import seig.ljm.xkckserver.service.RfidCardService;
 

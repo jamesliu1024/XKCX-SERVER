@@ -1,4 +1,4 @@
-package seig.ljm.xkckserver.constant;
+package seig.ljm.xkckserver.common.constant;
 
 import java.time.ZoneId;
 

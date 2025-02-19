@@ -7,7 +7,7 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import seig.ljm.xkckserver.constant.TimeZoneConstant;
+import seig.ljm.xkckserver.common.constant.TimeZoneConstant;
 import seig.ljm.xkckserver.entity.QuotaSetting;
 import seig.ljm.xkckserver.mapper.QuotaSettingMapper;
 import seig.ljm.xkckserver.service.QuotaSettingService;

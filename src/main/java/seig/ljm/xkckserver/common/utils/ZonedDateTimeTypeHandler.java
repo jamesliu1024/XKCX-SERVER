@@ -1,9 +1,9 @@
-package seig.ljm.xkckserver.config.typehandler;
+package seig.ljm.xkckserver.common.utils;
 
 import org.apache.ibatis.type.BaseTypeHandler;
 import org.apache.ibatis.type.JdbcType;
 import org.apache.ibatis.type.MappedTypes;
-import seig.ljm.xkckserver.constant.TimeZoneConstant;
+import seig.ljm.xkckserver.common.constant.TimeZoneConstant;
 
 import java.sql.*;
 import java.time.ZonedDateTime;

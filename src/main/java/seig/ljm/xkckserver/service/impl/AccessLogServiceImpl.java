@@ -7,7 +7,7 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
-import seig.ljm.xkckserver.constant.TimeZoneConstant;
+import seig.ljm.xkckserver.common.constant.TimeZoneConstant;
 import seig.ljm.xkckserver.entity.AccessDevice;
 import seig.ljm.xkckserver.entity.AccessLog;
 import seig.ljm.xkckserver.mapper.AccessLogMapper;

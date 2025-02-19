@@ -8,7 +8,7 @@ import org.springframework.stereotype.Service;
 import seig.ljm.xkckserver.entity.OperationLog;
 import seig.ljm.xkckserver.mapper.OperationLogMapper;
 import seig.ljm.xkckserver.service.OperationLogService;
-import seig.ljm.xkckserver.constant.TimeZoneConstant;
+import seig.ljm.xkckserver.common.constant.TimeZoneConstant;
 
 import java.time.ZonedDateTime;
 import java.util.List;

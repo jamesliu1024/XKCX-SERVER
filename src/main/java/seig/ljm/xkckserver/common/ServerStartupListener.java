@@ -1,4 +1,4 @@
-package seig.ljm.xkckserver.listener;
+package seig.ljm.xkckserver.common;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
@@ -11,7 +11,7 @@ import seig.ljm.xkckserver.mqtt.MQTTGateway;
 import seig.ljm.xkckserver.mqtt.dto.ServerStartupMessage;
 import seig.ljm.xkckserver.service.MessageLogService;
 import seig.ljm.xkckserver.entity.MessageLog;
-import seig.ljm.xkckserver.constant.TimeZoneConstant;
+import seig.ljm.xkckserver.common.constant.TimeZoneConstant;
 
 import java.time.ZonedDateTime;
 
