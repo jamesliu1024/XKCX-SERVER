@@ -150,4 +150,6 @@ public interface AccessLogService extends IService<AccessLog> {
      * @return 统计数据
      */
     Map<String, Object> getDeviceUsageStatistics(LocalDate startDate, LocalDate endDate);
+
+    Map<String, Object> getRealTimeFlow();
 }

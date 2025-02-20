@@ -6,6 +6,7 @@ import seig.ljm.xkckserver.entity.Visitor;
 
 import java.time.ZonedDateTime;
 import java.util.List;
+import java.util.Map;
 
 /**
  * 访客服务接口
@@ -127,4 +128,13 @@ public interface VisitorService extends IService<Visitor> {
      * @param status 新状态
      */
     void updateAccountStatus(Integer visitorId, String status);
+
+    /**
+     * 获取访客详细信息
+     * @param visitorId 访客ID
+     * @param includeReservations 是否包含预约历史
+     * @param includeAccessLogs 是否包含门禁记录
+     * @return 访客详细信息
+     */
+    Map<String, Object> getVisitorDetail(Integer visitorId, Boolean includeReservations, Boolean includeAccessLogs);
 }

@@ -18,6 +18,10 @@ import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import java.time.ZonedDateTime;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Map;
+import java.util.HashMap;
+import java.util.stream.Collectors;
+import java.util.Optional;
 
 /**
  * 预约管理服务实现类
@@ -267,5 +271,199 @@ public class ReservationServiceImpl extends ServiceImpl<ReservationMapper, Reser
         }
 
         return null;
+    }
+
+    @Override
+    public Map<String, Object> getPendingReservationCount(LocalDate date) {
+        Map<String, Object> result = new HashMap<>();
+        
+        try {
+            LambdaQueryWrapper<Reservation> wrapper = new LambdaQueryWrapper<>();
+            wrapper.eq(Reservation::getStatus, "pending")
+                  .eq(Reservation::getHidden, false);
+            
+            // 如果指定了日期，则只统计该日期的预约
+            if (date != null) {
+                ZonedDateTime startTime = date.atStartOfDay(TimeZoneConstant.ZONE_ID);
+                ZonedDateTime endTime = date.plusDays(1).atStartOfDay(TimeZoneConstant.ZONE_ID);
+                wrapper.ge(Reservation::getStartTime, startTime)
+                       .lt(Reservation::getStartTime, endTime);
+            }
+            
+            // 获取总数
+            long totalCount = count(wrapper);
+            
+            // 按被访部门分组统计
+            Map<String, Long> departmentStats = list(wrapper).stream()
+                    .collect(Collectors.groupingBy(
+                            Reservation::getHostDepartment,
+                            Collectors.counting()
+                    ));
+            
+            result.put("totalCount", totalCount);
+            result.put("departmentStats", departmentStats);
+            result.put("success", true);
+            result.put("message", "获取待审核预约数量成功");
+            
+            if (date != null) {
+                result.put("date", date.toString());
+            }
+        } catch (Exception e) {
+            log.error("获取待审核预约数量失败", e);
+            result.put("success", false);
+            result.put("message", "获取待审核预约数量失败：" + e.getMessage());
+        }
+        
+        return result;
+    }
+
+    @Override
+    public Map<String, Object> getReservationStatistics(LocalDate startDate, LocalDate endDate) {
+        Map<String, Object> result = new HashMap<>();
+        
+        try {
+            // 转换日期为时间戳
+            ZonedDateTime startTime = startDate.atStartOfDay(TimeZoneConstant.ZONE_ID);
+            ZonedDateTime endTime = endDate.plusDays(1).atStartOfDay(TimeZoneConstant.ZONE_ID);
+            
+            // 查询指定时间范围内的所有预约
+            LambdaQueryWrapper<Reservation> wrapper = new LambdaQueryWrapper<>();
+            wrapper.ge(Reservation::getStartTime, startTime)
+                   .lt(Reservation::getStartTime, endTime)
+                   .eq(Reservation::getHidden, false);
+            
+            List<Reservation> reservations = list(wrapper);
+            
+            // 1. 总预约数量
+            result.put("totalReservations", reservations.size());
+            
+            // 2. 按状态统计
+            Map<String, Long> statusStats = reservations.stream()
+                    .collect(Collectors.groupingBy(
+                            Reservation::getStatus,
+                            Collectors.counting()
+                    ));
+            result.put("statusStats", statusStats);
+            
+            // 3. 按被访部门统计
+            Map<String, Long> departmentStats = reservations.stream()
+                    .collect(Collectors.groupingBy(
+                            Reservation::getHostDepartment,
+                            Collectors.counting()
+                    ));
+            result.put("departmentStats", departmentStats);
+            
+            // 4. 按日期统计
+            Map<LocalDate, Long> dailyStats = reservations.stream()
+                    .collect(Collectors.groupingBy(
+                            reservation -> reservation.getStartTime().toLocalDate(),
+                            Collectors.counting()
+                    ));
+            result.put("dailyStats", dailyStats);
+            
+            // 5. 按主人确认状态统计
+            Map<String, Long> hostConfirmStats = reservations.stream()
+                    .collect(Collectors.groupingBy(
+                            Reservation::getHostConfirm,
+                            Collectors.counting()
+                    ));
+            result.put("hostConfirmStats", hostConfirmStats);
+            
+            // 6. 计算平均每日预约数
+            double avgDailyReservations = reservations.size() / 
+                    (startDate.until(endDate.plusDays(1)).getDays() * 1.0);
+            result.put("averageDailyReservations", avgDailyReservations);
+            
+            // 7. 找出预约最多的部门
+            Optional<Map.Entry<String, Long>> topDepartment = departmentStats.entrySet()
+                    .stream()
+                    .max(Map.Entry.comparingByValue());
+            if (topDepartment.isPresent()) {
+                Map<String, Object> topDepartmentInfo = new HashMap<>();
+                topDepartmentInfo.put("department", topDepartment.get().getKey());
+                topDepartmentInfo.put("count", topDepartment.get().getValue());
+                result.put("topDepartment", topDepartmentInfo);
+            }
+            
+            // 8. 找出预约最多的日期
+            Optional<Map.Entry<LocalDate, Long>> peakDate = dailyStats.entrySet()
+                    .stream()
+                    .max(Map.Entry.comparingByValue());
+            if (peakDate.isPresent()) {
+                Map<String, Object> peakDateInfo = new HashMap<>();
+                peakDateInfo.put("date", peakDate.get().getKey().toString());
+                peakDateInfo.put("count", peakDate.get().getValue());
+                result.put("peakDate", peakDateInfo);
+            }
+            
+            result.put("success", true);
+            result.put("message", "获取预约统计数据成功");
+            result.put("startDate", startDate.toString());
+            result.put("endDate", endDate.toString());
+            
+        } catch (Exception e) {
+            log.error("获取预约统计数据失败", e);
+            result.put("success", false);
+            result.put("message", "获取预约统计数据失败：" + e.getMessage());
+        }
+        
+        return result;
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public Reservation updateAdminReservation(Reservation reservation, Integer adminId) {
+        // 1. 检查预约是否存在
+        Reservation existingReservation = getById(reservation.getReservationId());
+        if (existingReservation == null) {
+            throw new RuntimeException("预约记录不存在");
+        }
+
+        // 2. 如果修改了时间，需要检查时间是否可用
+        if (!existingReservation.getStartTime().equals(reservation.getStartTime()) ||
+            !existingReservation.getEndTime().equals(reservation.getEndTime())) {
+            String timeCheckResult = checkTimeAvailableWithReason(reservation.getStartTime(), reservation.getEndTime());
+            if (timeCheckResult != null) {
+                throw new RuntimeException(timeCheckResult);
+            }
+        }
+
+        // 3. 保留原有的一些字段值
+        reservation.setVisitorId(existingReservation.getVisitorId());
+        reservation.setCreateTime(existingReservation.getCreateTime());
+        reservation.setHidden(existingReservation.getHidden());
+        
+        // 4. 更新时间和备注
+        reservation.setUpdateTime(ZonedDateTime.now(TimeZoneConstant.ZONE_ID));
+        if (reservation.getRemarks() == null || reservation.getRemarks().isEmpty()) {
+            reservation.setRemarks("管理员修改");
+        } else {
+            reservation.setRemarks("管理员修改: " + reservation.getRemarks());
+        }
+
+        // 5. 更新预约信息
+        if (!updateById(reservation)) {
+            throw new RuntimeException("更新预约信息失败");
+        }
+
+        // 6. 记录操作日志
+        try {
+            Map<String, Object> details = new HashMap<>();
+            details.put("before", existingReservation);
+            details.put("after", reservation);
+            details.put("adminId", adminId);
+            details.put("operationTime", ZonedDateTime.now(TimeZoneConstant.ZONE_ID));
+            
+            // 这里假设有一个operationLogService来记录操作日志
+            // operationLogService.recordOperation(adminId, "UPDATE_RESERVATION", 
+            //     reservation.getReservationId(), details);
+            
+            log.info("管理员{}修改了预约{}", adminId, reservation.getReservationId());
+        } catch (Exception e) {
+            log.error("记录预约修改操作日志失败", e);
+            // 不影响主流程，只记录错误日志
+        }
+
+        return getById(reservation.getReservationId());
     }
 }

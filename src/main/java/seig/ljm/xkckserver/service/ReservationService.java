@@ -7,6 +7,7 @@ import seig.ljm.xkckserver.entity.Reservation;
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.time.LocalDate;
+import java.util.Map;
 
 /**
  * 预约管理服务接口
@@ -180,4 +181,27 @@ public interface ReservationService extends IService<Reservation> {
      * @param status 新状态
      */
     void updateStatus(Integer reservationId, String status);
+
+    /**
+     * 获取待审核预约数量
+     * @param date 指定日期（可选）
+     * @return 统计结果
+     */
+    Map<String, Object> getPendingReservationCount(LocalDate date);
+
+    /**
+     * 获取预约统计数据
+     * @param startDate 开始日期
+     * @param endDate 结束日期
+     * @return 统计结果
+     */
+    Map<String, Object> getReservationStatistics(LocalDate startDate, LocalDate endDate);
+
+    /**
+     * 管理员修改预约信息
+     * @param reservation 预约信息
+     * @param adminId 操作管理员ID
+     * @return 更新后的预约信息
+     */
+    Reservation updateAdminReservation(Reservation reservation, Integer adminId);
 }

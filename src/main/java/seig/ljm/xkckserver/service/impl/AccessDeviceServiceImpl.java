@@ -16,7 +16,10 @@ import seig.ljm.xkckserver.service.AccessDeviceService;
 import seig.ljm.xkckserver.service.MQTTMessageService;
 
 import java.time.ZonedDateTime;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * <p>
@@ -130,9 +133,11 @@ public class AccessDeviceServiceImpl extends ServiceImpl<AccessDeviceMapper, Acc
     }
 
     @Override
-    public IPage<AccessDevice> getDevicePage(Integer current, Integer size, String status, String type) {
+    public IPage<AccessDevice> getDevicePage(Integer current, Integer size, String status, String type,
+            String location, String doorStatus, String sortField, String sortOrder) {
         LambdaQueryWrapper<AccessDevice> wrapper = new LambdaQueryWrapper<>();
         
+        // 添加查询条件
         if (status != null && !status.isEmpty()) {
             wrapper.eq(AccessDevice::getStatus, status);
         }
@@ -141,8 +146,76 @@ public class AccessDeviceServiceImpl extends ServiceImpl<AccessDeviceMapper, Acc
             wrapper.eq(AccessDevice::getDeviceType, type);
         }
         
-        wrapper.orderByDesc(AccessDevice::getLastHeartbeatTime);
+        if (location != null && !location.isEmpty()) {
+            wrapper.like(AccessDevice::getLocation, "%" + location + "%");
+        }
         
+        if (doorStatus != null && !doorStatus.isEmpty()) {
+            wrapper.eq(AccessDevice::getDoorStatus, doorStatus);
+        }
+        
+        // 添加排序
+        boolean isAsc = "asc".equalsIgnoreCase(sortOrder);
+        switch (sortField) {
+            case "status":
+                wrapper.orderBy(true, isAsc, AccessDevice::getStatus);
+                break;
+            case "lastHeartbeatTime":
+            default:
+                wrapper.orderBy(true, isAsc, AccessDevice::getLastHeartbeatTime);
+                break;
+        }
+        
+        // 执行分页查询
         return page(new Page<>(current, size), wrapper);
+    }
+
+    @Override
+    public Map<String, Object> getDeviceStatusStatistics() {
+        Map<String, Object> result = new HashMap<>();
+        
+        try {
+            // 1. 获取所有设备的状态统计
+            Map<String, Long> statusCount = list().stream()
+                    .collect(Collectors.groupingBy(
+                            AccessDevice::getStatus,
+                            Collectors.counting()
+                    ));
+            
+            // 2. 按设备类型分组统计状态
+            Map<String, Map<String, Long>> typeStatusCount = list().stream()
+                    .collect(Collectors.groupingBy(
+                            AccessDevice::getDeviceType,
+                            Collectors.groupingBy(
+                                    AccessDevice::getStatus,
+                                    Collectors.counting()
+                            )
+                    ));
+            
+            // 3. 统计总设备数
+            long totalDevices = list().size();
+            
+            // 4. 统计最近心跳时间超过5分钟的设备数量（可能存在通信问题）
+            ZonedDateTime fiveMinutesAgo = ZonedDateTime.now().minusMinutes(5);
+            long potentialIssueDevices = list().stream()
+                    .filter(device -> device.getLastHeartbeatTime() != null && 
+                            device.getLastHeartbeatTime().isBefore(fiveMinutesAgo))
+                    .count();
+            
+            // 5. 组装返回数据
+            result.put("totalDevices", totalDevices);
+            result.put("statusCount", statusCount);
+            result.put("typeStatusCount", typeStatusCount);
+            result.put("potentialIssueDevices", potentialIssueDevices);
+            result.put("success", true);
+            result.put("message", "获取设备状态统计成功");
+            
+        } catch (Exception e) {
+            log.error("获取设备状态统计失败", e);
+            result.put("success", false);
+            result.put("message", "获取设备状态统计失败：" + e.getMessage());
+        }
+        
+        return result;
     }
 }

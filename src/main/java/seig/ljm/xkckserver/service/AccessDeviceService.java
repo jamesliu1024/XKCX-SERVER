@@ -5,6 +5,7 @@ import com.baomidou.mybatisplus.extension.service.IService;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * 门禁设备服务接口
@@ -86,7 +87,18 @@ public interface AccessDeviceService extends IService<AccessDevice> {
      * @param size 每页大小
      * @param status 设备状态筛选
      * @param type 设备类型筛选
+     * @param location 设备位置筛选
+     * @param doorStatus 门禁状态筛选
+     * @param sortField 排序字段
+     * @param sortOrder 排序方式
      * @return 分页结果
      */
-    IPage<AccessDevice> getDevicePage(Integer current, Integer size, String status, String type);
+    IPage<AccessDevice> getDevicePage(Integer current, Integer size, String status, String type,
+            String location, String doorStatus, String sortField, String sortOrder);
+
+    /**
+     * 获取设备运行状态统计
+     * @return 统计结果
+     */
+    Map<String, Object> getDeviceStatusStatistics();
 }

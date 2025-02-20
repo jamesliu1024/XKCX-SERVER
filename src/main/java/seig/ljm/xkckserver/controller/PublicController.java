@@ -13,11 +13,8 @@ import seig.ljm.xkckserver.common.constant.VisitorConstant;
 import seig.ljm.xkckserver.common.utils.JwtUtils;
 import seig.ljm.xkckserver.entity.Visitor;
 import seig.ljm.xkckserver.service.VisitorService;
+import seig.ljm.xkckserver.common.security.Hash;
 
-import java.nio.charset.StandardCharsets;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
-import java.util.Base64;
 import java.util.HashMap;
 import java.util.Map;
 import java.time.ZoneId;
@@ -53,7 +50,7 @@ public class PublicController {
         }
 
         // 验证密码
-        String hashedPassword = hashPassword(password);
+        String hashedPassword = Hash.hashPassword(password);
         if (!hashedPassword.equals(visitor.getPasswordHash())) {
             // return ApiResult.fail("密码错误");
             return ApiResult.fail("手机号或密码错误");
@@ -88,7 +85,7 @@ public class PublicController {
         visitor.setUpdateTime(ZonedDateTime.now(ZONE_ID));
 
         // 对密码进行哈希处理
-        visitor.setPasswordHash(hashPassword(visitor.getPasswordHash()));
+        visitor.setPasswordHash(Hash.hashPassword(visitor.getPasswordHash()));
 
         // 保存用户
         visitorService.save(visitor);
@@ -98,26 +95,5 @@ public class PublicController {
         return ApiResult.success(savedVisitor);
     }
 
-    /**
-     * 对密码进行哈希处理
-     * @param password 密码
-     * @return 哈希后的密码
-     */ 
-    private String hashPassword(String password) {
-        try {
-            // salt
-//            String salt = "xkck-ljm-seig";
-            String salt = "";
-            StringBuilder sb = new StringBuilder();
-            sb.append(salt);
-            sb.append(password);
-            sb.append(salt);
-            String saltedPassword = sb.toString();
-            MessageDigest digest = MessageDigest.getInstance("SHA-256");
-            byte[] hash = digest.digest(saltedPassword.getBytes(StandardCharsets.UTF_8));
-            return Base64.getEncoder().encodeToString(hash);
-        } catch (NoSuchAlgorithmException e) {
-            throw new RuntimeException("Failed to hash password", e);
-        }
-    }
+    
 } 

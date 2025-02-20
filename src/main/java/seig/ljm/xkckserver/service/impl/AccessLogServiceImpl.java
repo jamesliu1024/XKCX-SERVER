@@ -13,6 +13,9 @@ import seig.ljm.xkckserver.entity.AccessLog;
 import seig.ljm.xkckserver.mapper.AccessLogMapper;
 import seig.ljm.xkckserver.service.AccessDeviceService;
 import seig.ljm.xkckserver.service.AccessLogService;
+import seig.ljm.xkckserver.dto.DeviceFlowDTO;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.time.LocalDate;
 import java.time.ZonedDateTime;
@@ -32,6 +35,7 @@ public class AccessLogServiceImpl extends ServiceImpl<AccessLogMapper, AccessLog
 
     private final AccessDeviceService accessDeviceService;
     private final AccessLogMapper accessLogMapper;
+    private static final Logger log = LoggerFactory.getLogger(AccessLogServiceImpl.class);
 
     @Autowired
     public AccessLogServiceImpl(@Lazy AccessDeviceService accessDeviceService, AccessLogMapper accessLogMapper) {
@@ -315,5 +319,35 @@ public class AccessLogServiceImpl extends ServiceImpl<AccessLogMapper, AccessLog
         statistics.put("deviceHourlyStats", deviceHourlyStats);
 
         return statistics;
+    }
+
+    @Override
+    public Map<String, Object> getRealTimeFlow() {
+        Map<String, Object> result = new HashMap<>();
+        
+        try {
+            // 1. 获取当前在校内的总人数（进入但未离开的人数）
+            Integer currentFlow = accessLogMapper.getCurrentFlow();
+            
+            // 2. 获取各个门禁设备的实时人数
+            List<DeviceFlowDTO> deviceFlow = accessLogMapper.getDeviceCurrentFlow();
+            
+            // 3. 获取最近一小时的进出记录统计
+            Map<String, Object> hourlyStats = accessLogMapper.getHourlyStats();
+            
+            result.put("currentFlow", currentFlow != null ? currentFlow : 0);
+            result.put("deviceFlow", deviceFlow);
+            result.put("hourlyStats", hourlyStats);
+            
+            // 添加成功标志
+            result.put("success", true);
+            result.put("message", "获取实时人流量数据成功");
+        } catch (Exception e) {
+            log.error("获取实时人流量数据失败", e);
+            result.put("success", false);
+            result.put("message", "获取实时人流量数据失败：" + e.getMessage());
+        }
+        
+        return result;
     }
 }

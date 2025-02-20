@@ -10,12 +10,20 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import seig.ljm.xkckserver.common.constant.TimeZoneConstant;
+import seig.ljm.xkckserver.common.security.Hash;
 import seig.ljm.xkckserver.entity.Visitor;
+import seig.ljm.xkckserver.entity.Reservation;
+import seig.ljm.xkckserver.entity.AccessLog;
 import seig.ljm.xkckserver.mapper.VisitorMapper;
 import seig.ljm.xkckserver.service.VisitorService;
+import seig.ljm.xkckserver.service.ReservationService;
+import seig.ljm.xkckserver.service.AccessLogService;
 
 import java.time.ZonedDateTime;
 import java.util.List;
+import java.util.Map;
+import java.util.HashMap;
+import java.util.stream.Collectors;
 
 /**
  * 访客服务实现类
@@ -29,6 +37,8 @@ import java.util.List;
 public class VisitorServiceImpl extends ServiceImpl<VisitorMapper, Visitor> implements VisitorService {
 
     private final VisitorMapper visitorMapper;
+    private final ReservationService reservationService;
+    private final AccessLogService accessLogService;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -79,6 +89,11 @@ public class VisitorServiceImpl extends ServiceImpl<VisitorMapper, Visitor> impl
             if (idNumberUser != null && !idNumberUser.getVisitorId().equals(visitor.getVisitorId())) {
                 throw new RuntimeException("证件号码已被其他用户使用");
             }
+        }
+
+        // 如果修改了密码，检查新密码是否符合要求
+        if (visitor.getPasswordHash() != null && !visitor.getPasswordHash().isEmpty()) {
+            visitor.setPasswordHash(Hash.hashPassword(visitor.getPasswordHash()));
         }
 
         // 更新访客信息
@@ -192,5 +207,78 @@ public class VisitorServiceImpl extends ServiceImpl<VisitorMapper, Visitor> impl
         }
         
         return list(wrapper);
+    }
+
+    @Override
+    public Map<String, Object> getVisitorDetail(Integer visitorId, Boolean includeReservations, Boolean includeAccessLogs) {
+        Map<String, Object> result = new HashMap<>();
+        
+        try {
+            // 1. 获取访客基本信息
+            Visitor visitor = getById(visitorId);
+            if (visitor == null) {
+                throw new RuntimeException("访客不存在");
+            }
+            
+            // 移除敏感信息
+            visitor.setPasswordHash(null);
+            result.put("visitorInfo", visitor);
+            
+            // 2. 如果需要，获取预约历史
+            if (includeReservations) {
+                LambdaQueryWrapper<Reservation> reservationWrapper = new LambdaQueryWrapper<>();
+                reservationWrapper.eq(Reservation::getVisitorId, visitorId)
+                                .eq(Reservation::getHidden, false)
+                                .orderByDesc(Reservation::getCreateTime);
+                List<Reservation> reservations = reservationService.list(reservationWrapper);
+                
+                // 统计预约状态
+                Map<String, Long> reservationStats = reservations.stream()
+                        .collect(Collectors.groupingBy(
+                                Reservation::getStatus,
+                                Collectors.counting()
+                        ));
+                
+                result.put("reservations", reservations);
+                result.put("reservationStats", reservationStats);
+            }
+            
+            // 3. 如果需要，获取门禁记录
+            if (includeAccessLogs) {
+                LambdaQueryWrapper<AccessLog> accessLogWrapper = new LambdaQueryWrapper<>();
+                accessLogWrapper.eq(AccessLog::getVisitorId, visitorId)
+                              .eq(AccessLog::getHidden, false)
+                              .orderByDesc(AccessLog::getAccessTime)
+                              .last("LIMIT 100"); // 限制最近100条记录
+                List<AccessLog> accessLogs = accessLogService.list(accessLogWrapper);
+                
+                // 统计访问情况
+                Map<String, Long> accessTypeStats = accessLogs.stream()
+                        .collect(Collectors.groupingBy(
+                                AccessLog::getAccessType,
+                                Collectors.counting()
+                        ));
+                
+                Map<String, Long> accessResultStats = accessLogs.stream()
+                        .collect(Collectors.groupingBy(
+                                AccessLog::getResult,
+                                Collectors.counting()
+                        ));
+                
+                result.put("accessLogs", accessLogs);
+                result.put("accessTypeStats", accessTypeStats);
+                result.put("accessResultStats", accessResultStats);
+            }
+            
+            result.put("success", true);
+            result.put("message", "获取访客详情成功");
+            
+        } catch (Exception e) {
+            log.error("获取访客详情失败", e);
+            result.put("success", false);
+            result.put("message", "获取访客详情失败：" + e.getMessage());
+        }
+        
+        return result;
     }
 }

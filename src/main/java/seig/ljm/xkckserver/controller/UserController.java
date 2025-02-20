@@ -26,7 +26,7 @@ import static seig.ljm.xkckserver.common.constant.EnumConstant.Visitor.Role.VISI
 @RequestMapping("/api/user")
 @RequiredArgsConstructor
 @Tag(name = "用户接口", description = "处理普通用户的功能请求")
-@RequireRole(value = VISITOR)
+// @RequireRole(value = VISITOR)
 public class UserController {
 
     private final VisitorService visitorService;
@@ -95,6 +95,18 @@ public class UserController {
     }
 
     // 3. 门禁记录查询
+    @GetMapping("/reservation/{reservationId}/access-logs")
+    @Operation(summary = "获取指定预约的门禁记录")
+    public ApiResult<IPage<AccessLog>> getReservationAccessLogs(
+            @Parameter(description = "预约ID") @PathVariable Integer reservationId,
+            @Parameter(description = "页码") @RequestParam(defaultValue = "1") Integer current,
+            @Parameter(description = "每页大小") @RequestParam(defaultValue = "10") Integer size,
+            @Parameter(description = "访问类型") @RequestParam(required = false) String accessType,
+            @Parameter(description = "访问结果") @RequestParam(required = false) String result) {
+        return ApiResult.success(accessLogService.getLogPage(current, size, null, null, reservationId, 
+            accessType, result, null, null));
+    }
+
     @GetMapping("/access-logs")
     @Operation(summary = "获取个人门禁记录")
     public ApiResult<IPage<AccessLog>> getAccessLogs(

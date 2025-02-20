@@ -2,10 +2,12 @@ package seig.ljm.xkckserver.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import org.apache.ibatis.annotations.*;
+import seig.ljm.xkckserver.dto.DeviceFlowDTO;
 import seig.ljm.xkckserver.entity.AccessLog;
 
 import java.time.ZonedDateTime;
 import java.util.List;
+import java.util.Map;
 
 /**
  * 门禁日志Mapper接口
@@ -75,5 +77,51 @@ public interface AccessLogMapper extends BaseMapper<AccessLog> {
             "</foreach>" +
             "</script>")
     int batchHideLog(@Param("logIds") List<Integer> logIds);
+
+    @Select("SELECT COUNT(DISTINCT visitor_id) as count " +
+            "FROM access_log " +
+            "WHERE visitor_id IN ( " +
+            "   SELECT visitor_id " +
+            "   FROM access_log a1 " +
+            "   WHERE access_type = 'entry' " +
+            "   AND NOT EXISTS ( " +
+            "       SELECT 1 " +
+            "       FROM access_log a2 " +
+            "       WHERE a2.visitor_id = a1.visitor_id " +
+            "       AND a2.access_time > a1.access_time " +
+            "       AND a2.access_type = 'exit' " +
+            "   ) " +
+            ")")
+    Integer getCurrentFlow();
+
+    @Select("SELECT d.location as location, COUNT(DISTINCT al.visitor_id) as count " +
+            "FROM access_device d " +
+            "LEFT JOIN access_log al ON d.device_id = al.device_id " +
+            "AND al.visitor_id IN ( " +
+            "   SELECT visitor_id " +
+            "   FROM access_log a1 " +
+            "   WHERE access_type = 'entry' " +
+            "   AND NOT EXISTS ( " +
+            "       SELECT 1 " +
+            "       FROM access_log a2 " +
+            "       WHERE a2.visitor_id = a1.visitor_id " +
+            "       AND a2.access_time > a1.access_time " +
+            "       AND a2.access_type = 'exit' " +
+            "   ) " +
+            ") " +
+            "GROUP BY d.device_id, d.location")
+    @Results({
+        @Result(property = "location", column = "location"),
+        @Result(property = "count", column = "count")
+    })
+    List<DeviceFlowDTO> getDeviceCurrentFlow();
+
+    @Select("SELECT " +
+            "   SUM(CASE WHEN access_type = 'entry' AND access_time >= DATE_SUB(NOW(), INTERVAL 1 HOUR) THEN 1 ELSE 0 END) as entry_count, " +
+            "   SUM(CASE WHEN access_type = 'exit' AND access_time >= DATE_SUB(NOW(), INTERVAL 1 HOUR) THEN 1 ELSE 0 END) as exit_count, " +
+            "   COUNT(DISTINCT visitor_id) as unique_visitors " +
+            "FROM access_log " +
+            "WHERE access_time >= DATE_SUB(NOW(), INTERVAL 1 HOUR)")
+    Map<String, Object> getHourlyStats();
 }
 
