@@ -33,6 +33,12 @@ public interface MQTTMessageService {
     void handleStatusReport(String payload);
 
     /**
+     * 处理门禁验证消息
+     * @param payload 消息内容
+     */
+    void handleVerify(String payload);
+
+    /**
      * 发送紧急控制命令
      * @param deviceId 设备ID
      * @param action 动作（emergency_open或emergency_close）

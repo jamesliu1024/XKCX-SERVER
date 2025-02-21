@@ -40,6 +40,11 @@ public class ReservationServiceImpl extends ServiceImpl<ReservationMapper, Reser
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Reservation createReservation(Reservation reservation) {
+        // 预约的时间必须是同一天
+        if (!reservation.getStartTime().toLocalDate().equals(reservation.getEndTime().toLocalDate())) {
+            throw new RuntimeException("预约时间必须是同一天");
+        }
+
         // 检查时间是否可用
         String timeCheckResult = checkTimeAvailableWithReason(reservation.getStartTime(), reservation.getEndTime());
         if (timeCheckResult != null) {
@@ -238,6 +243,20 @@ public class ReservationServiceImpl extends ServiceImpl<ReservationMapper, Reser
         if (reservation != null) {
             reservation.setStatus(status);
             reservation.setUpdateTime(ZonedDateTime.now(TimeZoneConstant.ZONE_ID));
+
+            // 如果状态是已确认，则需要检查配额
+            if (status.equals("confirmed")) {
+                LocalDate reservationDate = reservation.getStartTime().toLocalDate();
+                if (!quotaSettingService.checkQuotaAvailable(reservationDate)) {
+                    throw new RuntimeException("该日期预约配额已满或未设置配额");
+                }
+            }
+
+            // 如果更新为确认状态，把host_confirm设置为已确认
+            if (status.equals("confirmed")) {
+                reservation.setHostConfirm("confirmed");
+            }
+
             updateById(reservation);
             
             log.info("Updated reservation {} status to {}", reservationId, status);

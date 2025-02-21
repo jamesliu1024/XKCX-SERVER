@@ -26,7 +26,7 @@ CREATE TABLE visitor (
 -- 门禁设备表：记录各个校园门禁设备（分布在校园不同入口或设施）
 CREATE TABLE access_device (
     device_id INT PRIMARY KEY AUTO_INCREMENT,           -- 设备ID，自增长主键
-    location VARCHAR(100) NOT NULL,                       -- 设备所在位置（如“校园正门”、“西门”、“保安管理处”等）
+    location VARCHAR(100) NOT NULL,                       -- 设备所在位置（如"校园正门"、"西门"、"保安管理处"等）
     ip_address VARCHAR(15),                               -- 设备IP地址，用于网络通信或远程管理
     mac_address VARCHAR(20),                              -- 设备MAC地址，用于网络通信或远程管理
     status ENUM('online', 'offline', 'maintenance') DEFAULT 'online', -- 设备状态
@@ -175,14 +175,64 @@ CREATE TABLE blacklist_record (
 INSERT INTO access_device (device_id, location, ip_address, mac_address, status, device_type, description)
 VALUES (-1, '服务器', '0.0.0.0', '00:00:00:00:00:00', 'online', 'management', '系统服务器');
 
--- 1.2 插入门禁设备
+-- 1.2 插入系统预设访客（用于记录未知访客的访问记录）
+INSERT INTO visitor (
+    visitor_id,
+    name, 
+    phone, 
+    id_type, 
+    id_number, 
+    role, 
+    account_status, 
+    password_hash, 
+    create_time
+) VALUES (
+    -1,
+    '未知访客', 
+    '00000000000', 
+    'other',
+    'UNKNOWN',
+    'visitor', 
+    'normal',
+    'pmWkWSBCL51Bfkhn79xPuKBKHz//H6B+mY6G9/eieuM=',
+    '2025-01-01 00:00:00'
+);
+
+-- 1.2.1 插入系统预设预约记录（用于记录无效卡片的访问记录）
+INSERT INTO reservation (
+    reservation_id,
+    visitor_id,
+    reason,
+    host_department,
+    host_name,
+    start_time,
+    end_time,
+    host_confirm,
+    status,
+    create_time,
+    remarks
+) VALUES (
+    -1,
+    -1,
+    '系统预设记录',
+    '系统',
+    '系统',
+    '2025-01-01 00:00:00',
+    '2038-01-19 00:00:00',
+    'confirmed',
+    'confirmed',
+    '2025-01-01 00:00:00',
+    '用于记录无效卡片的访问记录'
+);
+
+-- 1.3 插入门禁设备
 INSERT INTO access_device (location, ip_address, mac_address, status, device_type, description)
 VALUES 
 ('校园正门', '192.168.1.101', '00:1A:2B:3C:4D:5E', 'online', 'campus_gate', '校园主入口门禁'),
 ('校园西门', '192.168.1.102', '00:1A:2B:3C:4D:5F', 'online', 'campus_gate', '校园侧门门禁'),
 ('行政楼大厅', '192.168.1.105', '00:1A:2B:3C:4D:62', 'online', 'management', 'RFID卡发放设备');
 
--- 1.3 插入管理员信息
+-- 1.4 插入管理员信息
 INSERT INTO visitor (
     name, phone, id_type, id_number, role, account_status, 
     password_hash, create_time
@@ -193,12 +243,12 @@ INSERT INTO visitor (
     '2025-01-01 00:00:00'
 );
 
--- 1.4 初始化RFID卡片
+-- 1.5 初始化RFID卡片
 INSERT INTO rfid_card (uid, status, create_time, remarks) VALUES 
-('RFID_TEST_001', 'available', '2025-01-01 00:00:00', '新登记卡片'),
-('RFID_TEST_002', 'available', '2025-01-01 00:00:00', '新登记卡片'),
-('RFID_TEST_003', 'available', '2025-01-01 00:00:00', '新登记卡片'),
-('RFID_TEST_004', 'available', '2025-01-01 00:00:00', '新登记卡片'),
+('21D43902', 'available', '2025-01-01 00:00:00', '白卡'),
+('E508C401', 'available', '2025-01-01 00:00:00', '蓝卡'),
+('5041ACD9', 'available', '2025-01-01 00:00:00', '岭南通'),
+('89486741', 'available', '2025-01-01 00:00:00', '深圳通'),
 ('RFID_TEST_005', 'available', '2025-01-01 00:00:00', '新登记卡片'),
 ('RFID_TEST_006', 'available', '2025-01-01 00:00:00', '新登记卡片');
 

@@ -12,6 +12,7 @@ import seig.ljm.xkckserver.entity.AccessLog;
 import seig.ljm.xkckserver.entity.MessageLog;
 import seig.ljm.xkckserver.entity.RfidCard;
 import seig.ljm.xkckserver.entity.RfidCardRecord;
+import seig.ljm.xkckserver.entity.Reservation;
 import seig.ljm.xkckserver.mqtt.MQTTGateway;
 import seig.ljm.xkckserver.mqtt.dto.*;
 import seig.ljm.xkckserver.service.*;
@@ -31,6 +32,7 @@ public class MQTTMessageServiceImpl implements MQTTMessageService {
     private final MQTTGateway mqttGateway;
     private final AccessLogService accessLogService;
     private final DelayedMqttService delayedMqttService;
+    private final ReservationService reservationService;
 
     @Autowired
     public MQTTMessageServiceImpl(
@@ -41,7 +43,8 @@ public class MQTTMessageServiceImpl implements MQTTMessageService {
             @Lazy AccessDeviceService accessDeviceService,
             MQTTGateway mqttGateway,
             AccessLogService accessLogService,
-            DelayedMqttService delayedMqttService) {
+            DelayedMqttService delayedMqttService,
+            ReservationService reservationService) {
         this.objectMapper = objectMapper;
         this.messageLogService = messageLogService;
         this.rfidCardService = rfidCardService;
@@ -50,6 +53,7 @@ public class MQTTMessageServiceImpl implements MQTTMessageService {
         this.mqttGateway = mqttGateway;
         this.accessLogService = accessLogService;
         this.delayedMqttService = delayedMqttService;
+        this.reservationService = reservationService;
     }
 
     @Override
@@ -78,6 +82,10 @@ public class MQTTMessageServiceImpl implements MQTTMessageService {
                 switch (type) {
                     case "connect":
                         handleConnect(payload);
+                        messageLog.setStatus("processed");
+                        break;
+                    case "verify":
+                        handleVerify(payload);
                         messageLog.setStatus("processed");
                         break;
                     case "verify_card":
@@ -132,8 +140,9 @@ public class MQTTMessageServiceImpl implements MQTTMessageService {
             device.setStatus("online");
             accessDeviceService.saveOrUpdate(device);
             
-            // 构建响应消息
-            String replyPayload = String.format("connect_reply|%d|OK", deviceId);
+            // 构建响应消息,包含当前Unix时间戳,考虑硬件3秒延迟
+            long unixTime = System.currentTimeMillis() / 1000L + 3; // 获取当前Unix时间戳(秒)并加3秒补偿延迟
+            String replyPayload = String.format("connect_reply|%d|%d", deviceId, unixTime);
             String topic = "xkck/device/" + deviceId + "/command";
             
             // 使用延迟发送服务
@@ -156,32 +165,28 @@ public class MQTTMessageServiceImpl implements MQTTMessageService {
     @Override
     public void handleVerifyCard(String payload) {
         try {
-            // 解析卡片验证消息
-            VerifyCardMessage verifyMessage = objectMapper.readValue(payload, VerifyCardMessage.class);
-            Integer deviceId = Integer.parseInt(verifyMessage.getDeviceId());
-            String uid = verifyMessage.getData().getUid();
-            String action = verifyMessage.getData().getAction();
+            // 解析简单文本格式的验证卡片消息
+            String[] parts = payload.split("\\|");
+            if (parts.length < 3 || !parts[0].equals("verify_card")) {
+                log.error("Invalid verify card message format: {}", payload);
+                return;
+            }
+
+            Integer deviceId = Integer.parseInt(parts[1]);
+            String uid = parts[2];
             
             // 查找卡片信息
             RfidCard card = rfidCardService.getCardByUid(uid);
-            VerifyCardReplyMessage replyMessage = new VerifyCardReplyMessage();
-            replyMessage.setDeviceId(String.valueOf(deviceId));
-            replyMessage.setStatus("success");
-            
-            VerifyCardReplyMessage.VerifyCardReplyData replyData = new VerifyCardReplyMessage.VerifyCardReplyData();
+            String replyPayload;
             
             // 验证卡片
             if (card == null) {
                 // 卡片不存在
-                replyData.setAllow(false);
-                replyData.setMessage("Invalid Card");
-                replyData.setAction("deny_access");
+                replyPayload = String.format("verify_card_reply|%d|not_found", deviceId);
                 log.warn("Invalid card UID: {} at device: {}", uid, deviceId);
             } else if (!card.getStatus().equals("issued")) {
                 // 卡片状态不正确
-                replyData.setAllow(false);
-                replyData.setMessage("Invalid Card Status: " + card.getStatus());
-                replyData.setAction("deny_access");
+                replyPayload = String.format("verify_card_reply|%d|unavailable", deviceId);
                 log.warn("Invalid card status: {} for card: {} at device: {}", card.getStatus(), uid, deviceId);
             } else {
                 // 获取卡片最新的发放记录
@@ -189,46 +194,22 @@ public class MQTTMessageServiceImpl implements MQTTMessageService {
                 
                 if (latestRecord == null || !latestRecord.getOperationType().equals("issue")) {
                     // 没有有效的发放记录
-                    replyData.setAllow(false);
-                    replyData.setMessage("Card Not Issued");
-                    replyData.setAction("deny_access");
+                    replyPayload = String.format("verify_card_reply|%d|not_issued", deviceId);
                     log.warn("No valid issue record for card: {} at device: {}", uid, deviceId);
                 } else if (latestRecord.getExpirationTime().isBefore(ZonedDateTime.now(TimeZoneConstant.ZONE_ID))) {
                     // 卡片已过期
-                    replyData.setAllow(false);
-                    replyData.setMessage("Card Expired");
-                    replyData.setAction("deny_access");
+                    replyPayload = String.format("verify_card_reply|%d|out_of_date", deviceId);
                     log.warn("Expired card: {} at device: {}", uid, deviceId);
                 } else {
                     // 卡片验证通过
-                    replyData.setAllow(true);
-                    replyData.setMessage("Access Granted");
-                    replyData.setAction("open_door");
-                    replyData.setExpireTime(latestRecord.getExpirationTime().toEpochSecond());
+                    replyPayload = String.format("verify_card_reply|%d|allow", deviceId);
                     log.info("Card verification successful: {} at device: {}", uid, deviceId);
                 }
             }
             
-            replyMessage.setData(replyData);
-            
-            // 发送响应
-            String replyPayload = objectMapper.writeValueAsString(replyMessage);
-            mqttGateway.sendToMqtt("xkck/device/" + deviceId + "/command", replyPayload);
-            
-            // 记录访问日志
-            AccessLog accessLog = new AccessLog();
-            accessLog.setDeviceId(deviceId);
-            accessLog.setAccessTime(ZonedDateTime.now(TimeZoneConstant.ZONE_ID));
-            accessLog.setAccessType(action);
-            if (card != null) {
-                RfidCardRecord latestRecord = rfidCardRecordService.getLatestCardRecord(card.getCardId());
-                if (latestRecord != null) {
-                    accessLog.setVisitorId(latestRecord.getReservationId());
-                }
-            }
-            accessLog.setResult(replyData.isAllow() ? "allowed" : "denied");
-            accessLog.setReason(replyData.getMessage());
-            accessLogService.save(accessLog);
+            // 使用延迟发送服务发送响应
+            String topic = "xkck/device/" + deviceId + "/command";
+            delayedMqttService.sendDelayedMessage(topic, replyPayload, 2000);
             
             // 记录响应消息
             MessageLog replyLog = new MessageLog();
@@ -373,6 +354,99 @@ public class MQTTMessageServiceImpl implements MQTTMessageService {
         } catch (Exception e) {
             log.error("Error sending emergency control message: ", e);
             return false;
+        }
+    }
+
+    @Override
+    public void handleVerify(String payload) {
+        try {
+            // 解析消息格式：verify|设备号|时间戳|uid|entry/exit
+            String[] parts = payload.split("\\|");
+            if (parts.length < 5 || !parts[0].equals("verify")) {
+                log.error("Invalid verify message format: {}", payload);
+                return;
+            }
+
+            Integer deviceId = Integer.parseInt(parts[1]);
+            Long timestamp = Long.parseLong(parts[2]);
+            String uid = parts[3];
+            String accessType = parts[4];
+
+            // 查找卡片信息
+            RfidCard card = rfidCardService.getCardByUid(uid);
+            String result = "deny";
+            String reason = "";
+            RfidCardRecord latestRecord = null;
+            Integer visitorId = -1; // 默认使用系统预设的未知访客ID
+            Integer reservationId = -1; // 默认使用系统预设的预约记录ID
+
+            if (card == null) {
+                reason = "卡片不存在";
+                log.warn("Card not found: {} at device: {}", uid, deviceId);
+            } else if (!card.getStatus().equals("issued")) {
+                reason = "卡片状态无效";
+                log.warn("Invalid card status: {} for card: {} at device: {}", card.getStatus(), uid, deviceId);
+            } else {
+                // 获取卡片最新的发放记录
+                latestRecord = rfidCardRecordService.getLatestCardRecord(card.getCardId());
+                
+                if (latestRecord == null || !latestRecord.getOperationType().equals("issue")) {
+                    reason = "卡片未发放";
+                    log.warn("No valid issue record for card: {} at device: {}", uid, deviceId);
+                } else if (latestRecord.getExpirationTime().isBefore(ZonedDateTime.now(TimeZoneConstant.ZONE_ID))) {
+                    reason = "卡片已过期";
+                    log.warn("Expired card: {} at device: {}", uid, deviceId);
+                } else {
+                    // 卡片验证通过，允许通行
+                    result = "allow";
+                    reason = "验证通过";
+                    reservationId = latestRecord.getReservationId();
+                    // 从预约记录中获取访客ID
+                    Reservation reservation = reservationService.getById(reservationId);
+                    if (reservation != null) {
+                        visitorId = reservation.getVisitorId();
+                    } else {
+                        // 如果找不到预约记录，拒绝访问
+                        result = "deny";
+                        reason = "预约记录不存在";
+                        reservationId = -1; // 使用系统预设的预约记录ID
+                        log.warn("Reservation not found for card: {} at device: {}", uid, deviceId);
+                    }
+                }
+            }
+
+            // 构建响应消息
+            timestamp = System.currentTimeMillis() / 1000L + 3;
+            // int replyCode = result.equals("allow") ? 1 : 0;
+            // String replyPayload = String.format("verify_reply|%d|%d|%s|%d", deviceId, timestamp, uid, replyCode);
+            String replyPayload = String.format("vere|%s|%d", result, timestamp);
+            String topic = "xkck/device/" + deviceId + "/command";
+            
+            // 使用延迟发送服务发送响应
+            delayedMqttService.sendDelayedMessage(topic, replyPayload, 2000);
+
+            // 记录访问日志
+            AccessLog accessLog = new AccessLog();
+            accessLog.setDeviceId(deviceId);
+            accessLog.setCardId(card != null ? card.getCardId() : null);
+            accessLog.setVisitorId(visitorId); // 使用系统预设的访客ID或实际访客ID
+            accessLog.setReservationId(reservationId); // 使用系统预设的预约记录ID或实际预约ID
+            accessLog.setAccessTime(ZonedDateTime.now(TimeZoneConstant.ZONE_ID));
+            accessLog.setAccessType(accessType);
+            accessLog.setResult(result.equals("allow") ? "allowed" : "denied");
+            accessLog.setReason(reason);
+            accessLogService.save(accessLog);
+            
+            // 记录响应消息
+            MessageLog replyLog = new MessageLog();
+            replyLog.setDeviceId(deviceId);
+            replyLog.setPayload(replyPayload);
+            replyLog.setReceiveTime(ZonedDateTime.now(TimeZoneConstant.ZONE_ID));
+            replyLog.setStatus("sent");
+            messageLogService.save(replyLog);
+            
+        } catch (Exception e) {
+            log.error("Error handling verify message: ", e);
         }
     }
 

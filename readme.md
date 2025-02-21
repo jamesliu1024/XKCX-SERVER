@@ -122,6 +122,7 @@ xkck/admin/{device_id}/*          # 管理设备专用主题
         "ip": "192.168.1.101"
     }
 }
+connect|设备号
 ```
 - 服务器响应 (服务器 -> 设备)
 ```json
@@ -136,13 +137,14 @@ xkck/admin/{device_id}/*          # 管理设备专用主题
         "description": "校园主入口门禁"
     }
 }
+connect_reply|设备号|时间戳
 ```
 
 #### 2. RFID卡片验证
 - 设备请求 (设备 -> 服务器)
 ```json
 {
-    "type": "verify_card",
+    "type": "verify",
     "device_id": "1",
     "timestamp": 1645678905,
     "data": {
@@ -150,6 +152,7 @@ xkck/admin/{device_id}/*          # 管理设备专用主题
         "action": "entry"  // entry或exit
     }
 }
+verify|设备号|时间戳|uid|entry或exit
 ```
 - 服务器响应 (服务器 -> 设备)
 ```json

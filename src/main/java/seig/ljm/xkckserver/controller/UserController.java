@@ -33,6 +33,7 @@ public class UserController {
     private final ReservationService reservationService;
     private final AccessLogService accessLogService;
     private final RfidCardRecordService rfidCardRecordService;
+    private final QuotaSettingService quotaSettingService;
 
     // 1. 个人信息管理
     @GetMapping("/profile")
@@ -144,5 +145,14 @@ public class UserController {
     public ApiResult<RfidCardRecord> getLatestCardRecord(
             @Parameter(description = "卡片ID") @RequestParam Integer cardId) {
         return ApiResult.success(rfidCardRecordService.getLatestCardRecord(cardId));
+    }
+
+    // 5. 预约配额查询
+    @GetMapping("/quota/next-seven-days")
+    @Operation(summary = "获取未来七天的预约配额情况")
+    public ApiResult<List<QuotaSetting>> getNextSevenDaysQuota() {
+        LocalDate today = LocalDate.now();
+        LocalDate sevenDaysLater = today.plusDays(6); // 包含今天在内的七天
+        return ApiResult.success(quotaSettingService.getDateRangeQuotas(today, sevenDaysLater));
     }
 } 
