@@ -2,7 +2,7 @@ package seig.ljm.xkckserver.mqtt.dto;
 
 import lombok.Data;
 import lombok.EqualsAndHashCode;
-
+import com.fasterxml.jackson.annotation.JsonProperty;
 @Data
 @EqualsAndHashCode(callSuper = true)
 public class ConnectReplyMessage extends BaseMessage {
@@ -16,8 +16,10 @@ public class ConnectReplyMessage extends BaseMessage {
 
     @Data
     public static class ConnectReplyData {
+        @JsonProperty("device_id")
         private String deviceId;
         private String location;
+        @JsonProperty("device_type")
         private String deviceType;
         private String description;
     }

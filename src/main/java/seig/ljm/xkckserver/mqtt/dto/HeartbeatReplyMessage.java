@@ -2,7 +2,7 @@ package seig.ljm.xkckserver.mqtt.dto;
 
 import lombok.Data;
 import lombok.EqualsAndHashCode;
-
+import com.fasterxml.jackson.annotation.JsonProperty;
 @Data
 @EqualsAndHashCode(callSuper = true)
 public class HeartbeatReplyMessage extends BaseMessage {
@@ -16,6 +16,7 @@ public class HeartbeatReplyMessage extends BaseMessage {
 
     @Data
     public static class HeartbeatReplyData {
+        @JsonProperty("server_time")
         private Long serverTime;
     }
 } 

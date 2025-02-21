@@ -17,6 +17,8 @@ import seig.ljm.xkckserver.mqtt.dto.*;
 import seig.ljm.xkckserver.service.*;
 
 import java.time.ZonedDateTime;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 @Slf4j
 @Service
@@ -50,6 +52,12 @@ public class MQTTMessageServiceImpl implements MQTTMessageService {
     @Override
     public void handleMessage(String topic, String payload) {
         try {
+            // 使用正则表达式提取deviceId
+            // Pattern deviceIdPattern = Pattern.compile("\"deviceId\":\"(\\d+)\"");
+            // Matcher matcher = deviceIdPattern.matcher(payload);
+            // String deviceId = matcher.find() ? matcher.group(1) : null;
+            // System.out.println("deviceId:"+deviceId);
+            // System.out.println("payload:"+payload);
             // 记录接收到的消息
             MessageLog messageLog = new MessageLog();
             messageLog.setPayload(payload);
@@ -121,9 +129,12 @@ public class MQTTMessageServiceImpl implements MQTTMessageService {
             
             ConnectReplyMessage.ConnectReplyData replyData = new ConnectReplyMessage.ConnectReplyData();
             replyData.setDeviceId(String.valueOf(deviceId));
-            replyData.setLocation(device.getLocation());
+            // ESP 中文乱码
+            // replyData.setLocation(device.getLocation());
+            replyData.setLocation("");
             replyData.setDeviceType(device.getDeviceType());
-            replyData.setDescription(device.getDescription());
+            // replyData.setDescription(device.getDescription());
+            replyData.setDescription("");
             replyMessage.setData(replyData);
             
             // 发送响应
@@ -165,13 +176,13 @@ public class MQTTMessageServiceImpl implements MQTTMessageService {
             if (card == null) {
                 // 卡片不存在
                 replyData.setAllow(false);
-                replyData.setMessage("无效的卡片");
+                replyData.setMessage("Invalid Card");
                 replyData.setAction("deny_access");
                 log.warn("Invalid card UID: {} at device: {}", uid, deviceId);
             } else if (!card.getStatus().equals("issued")) {
                 // 卡片状态不正确
                 replyData.setAllow(false);
-                replyData.setMessage("卡片状态无效: " + card.getStatus());
+                replyData.setMessage("Invalid Card Status: " + card.getStatus());
                 replyData.setAction("deny_access");
                 log.warn("Invalid card status: {} for card: {} at device: {}", card.getStatus(), uid, deviceId);
             } else {
@@ -181,19 +192,19 @@ public class MQTTMessageServiceImpl implements MQTTMessageService {
                 if (latestRecord == null || !latestRecord.getOperationType().equals("issue")) {
                     // 没有有效的发放记录
                     replyData.setAllow(false);
-                    replyData.setMessage("卡片未正确发放");
+                    replyData.setMessage("Card Not Issued");
                     replyData.setAction("deny_access");
                     log.warn("No valid issue record for card: {} at device: {}", uid, deviceId);
                 } else if (latestRecord.getExpirationTime().isBefore(ZonedDateTime.now(TimeZoneConstant.ZONE_ID))) {
                     // 卡片已过期
                     replyData.setAllow(false);
-                    replyData.setMessage("卡片已过期");
+                    replyData.setMessage("Card Expired");
                     replyData.setAction("deny_access");
                     log.warn("Expired card: {} at device: {}", uid, deviceId);
                 } else {
                     // 卡片验证通过
                     replyData.setAllow(true);
-                    replyData.setMessage("验证通过");
+                    replyData.setMessage("Access Granted");
                     replyData.setAction("open_door");
                     replyData.setExpireTime(latestRecord.getExpirationTime().toEpochSecond());
                     log.info("Card verification successful: {} at device: {}", uid, deviceId);
