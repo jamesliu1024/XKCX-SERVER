@@ -30,6 +30,7 @@ public class MQTTMessageServiceImpl implements MQTTMessageService {
     private final AccessDeviceService accessDeviceService;
     private final MQTTGateway mqttGateway;
     private final AccessLogService accessLogService;
+    private final DelayedMqttService delayedMqttService;
 
     @Autowired
     public MQTTMessageServiceImpl(
@@ -39,7 +40,8 @@ public class MQTTMessageServiceImpl implements MQTTMessageService {
             RfidCardRecordService rfidCardRecordService,
             @Lazy AccessDeviceService accessDeviceService,
             MQTTGateway mqttGateway,
-            AccessLogService accessLogService) {
+            AccessLogService accessLogService,
+            DelayedMqttService delayedMqttService) {
         this.objectMapper = objectMapper;
         this.messageLogService = messageLogService;
         this.rfidCardService = rfidCardService;
@@ -47,29 +49,33 @@ public class MQTTMessageServiceImpl implements MQTTMessageService {
         this.accessDeviceService = accessDeviceService;
         this.mqttGateway = mqttGateway;
         this.accessLogService = accessLogService;
+        this.delayedMqttService = delayedMqttService;
     }
 
     @Override
     public void handleMessage(String topic, String payload) {
         try {
-            // 使用正则表达式提取deviceId
-            // Pattern deviceIdPattern = Pattern.compile("\"deviceId\":\"(\\d+)\"");
-            // Matcher matcher = deviceIdPattern.matcher(payload);
-            // String deviceId = matcher.find() ? matcher.group(1) : null;
-            // System.out.println("deviceId:"+deviceId);
-            // System.out.println("payload:"+payload);
             // 记录接收到的消息
             MessageLog messageLog = new MessageLog();
             messageLog.setPayload(payload);
             messageLog.setReceiveTime(ZonedDateTime.now(TimeZoneConstant.ZONE_ID));
             messageLog.setStatus("received");
 
-            // 解析消息类型
-            BaseMessage baseMessage = objectMapper.readValue(payload, BaseMessage.class);
-            messageLog.setDeviceId(Integer.parseInt(baseMessage.getDeviceId()));
+            // 解析简单文本格式消息
+            String[] parts = payload.split("\\|");
+            if (parts.length < 2) {
+                log.error("Invalid message format: {}", payload);
+                messageLog.setStatus("error");
+                messageLogService.save(messageLog);
+                return;
+            }
+
+            String type = parts[0];
+            String deviceId = parts[1];
+            messageLog.setDeviceId(Integer.parseInt(deviceId));
             
             try {
-                switch (baseMessage.getType()) {
+                switch (type) {
                     case "connect":
                         handleConnect(payload);
                         messageLog.setStatus("processed");
@@ -87,7 +93,7 @@ public class MQTTMessageServiceImpl implements MQTTMessageService {
                         messageLog.setStatus("processed");
                         break;
                     default:
-                        log.warn("Unknown message type: {}", baseMessage.getType());
+                        log.warn("Unknown message type: {}", type);
                         messageLog.setStatus("unknown_type");
                 }
             } catch (Exception e) {
@@ -104,9 +110,14 @@ public class MQTTMessageServiceImpl implements MQTTMessageService {
     @Override
     public void handleConnect(String payload) {
         try {
-            // 解析连接消息
-            ConnectMessage connectMessage = objectMapper.readValue(payload, ConnectMessage.class);
-            Integer deviceId = Integer.parseInt(connectMessage.getDeviceId());
+            // 解析简单文本格式的连接消息
+            String[] parts = payload.split("\\|");
+            if (parts.length < 2 || !parts[0].equals("connect")) {
+                log.error("Invalid connect message format: {}", payload);
+                return;
+            }
+
+            Integer deviceId = Integer.parseInt(parts[1]);
             
             // 查找或创建设备记录
             AccessDevice device = accessDeviceService.getById(deviceId);
@@ -114,32 +125,19 @@ public class MQTTMessageServiceImpl implements MQTTMessageService {
                 device = new AccessDevice();
                 device.setDeviceId(deviceId);
                 device.setDeviceType("campus_gate"); // 默认设置为校园门禁
-                device.setDescription("新接入的门禁设备");
+                device.setDescription("New device");
             }
             
             // 更新设备信息
-            device.setIpAddress(connectMessage.getData().getIp());
             device.setStatus("online");
             accessDeviceService.saveOrUpdate(device);
             
             // 构建响应消息
-            ConnectReplyMessage replyMessage = new ConnectReplyMessage();
-            replyMessage.setStatus("success");
-            replyMessage.setDeviceId(String.valueOf(deviceId));
+            String replyPayload = String.format("connect_reply|%d|OK", deviceId);
+            String topic = "xkck/device/" + deviceId + "/command";
             
-            ConnectReplyMessage.ConnectReplyData replyData = new ConnectReplyMessage.ConnectReplyData();
-            replyData.setDeviceId(String.valueOf(deviceId));
-            // ESP 中文乱码
-            // replyData.setLocation(device.getLocation());
-            replyData.setLocation("");
-            replyData.setDeviceType(device.getDeviceType());
-            // replyData.setDescription(device.getDescription());
-            replyData.setDescription("");
-            replyMessage.setData(replyData);
-            
-            // 发送响应
-            String replyPayload = objectMapper.writeValueAsString(replyMessage);
-            mqttGateway.sendToMqtt("xkck/device/" + deviceId + "/command", replyPayload);
+            // 使用延迟发送服务
+            delayedMqttService.sendDelayedMessage(topic, replyPayload, 2000);
             
             // 记录响应消息
             MessageLog replyLog = new MessageLog();
