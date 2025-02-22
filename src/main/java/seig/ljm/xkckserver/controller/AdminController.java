@@ -266,6 +266,13 @@ public class AdminController {
         return ApiResult.success(quotaSettingService.getQuotaPage(current, size, startDate, endDate, null));
     }
 
+    @GetMapping("/quota/{quotaId}")
+    @Operation(summary = "获取指定配额设置详情")
+    public ApiResult<QuotaSetting> getQuotaDetail(
+            @Parameter(description = "配额ID") @PathVariable Integer quotaId) {
+        return ApiResult.success(quotaSettingService.getById(quotaId));
+    }
+
     @PutMapping("/quota/{quotaId}")
     @Operation(summary = "修改配额设置")
     public ApiResult<QuotaSetting> updateQuotaSetting(
