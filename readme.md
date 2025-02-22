@@ -87,6 +87,8 @@
 4. MQTT
    - 50005:1883 
    - 50006:18083 
+5. Redis
+   - 50007:6379
 
 ## 部署说明
 1. 克隆项目到本地
@@ -102,11 +104,11 @@
 
 ### 主题(Topic)设计
 ```
-xkck/device/{device_id}/status    # 设备状态上报
-xkck/device/{device_id}/command   # 服务器命令下发
-xkck/device/{device_id}/response  # 设备响应服务器命令
-xkck/device/{device_id}/heartbeat # 设备心跳包
-xkck/admin/{device_id}/*          # 管理设备专用主题
+xkck/device/{device_id}/status    # 设备状态上报 设备->服务器
+xkck/device/{device_id}/command   # 服务器命令下发 服务器->设备
+xkck/device/{device_id}/response  # 设备响应服务器命令 设备->服务器
+xkck/device/{device_id}/heartbeat # 设备心跳包 设备->服务器
+xkck/admin/{device_id}/*          # 管理设备专用主题 服务器->设备
 ```
 
 ### 消息格式

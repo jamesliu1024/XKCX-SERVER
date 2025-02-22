@@ -65,12 +65,17 @@
         <dependency>
             <groupId>com.baomidou</groupId>
             <artifactId>mybatis-plus-spring-boot3-starter</artifactId>
-            <version>3.5.10.1</version>
+            <version>3.5.5</version>
         </dependency>
         <dependency>
             <groupId>com.baomidou</groupId>
             <artifactId>mybatis-plus-generator</artifactId>
-            <version>3.5.10.1</version>
+            <version>3.5.5</version>
+        </dependency>
+        <dependency>
+            <groupId>com.baomidou</groupId>
+            <artifactId>mybatis-plus-extension</artifactId>
+            <version>3.5.5</version>
         </dependency>
         <dependency>
             <groupId>com.alibaba</groupId>
@@ -127,8 +132,6 @@
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
                 <configuration>
-                    <mainClass>seig.ljm.xkckserver.XkckServerApplication</mainClass>
-                    <includeSystemScope>true</includeSystemScope>
                     <annotationProcessorPaths>
                         <path>
                             <groupId>org.projectlombok</groupId>
