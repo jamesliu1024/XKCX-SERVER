@@ -35,6 +35,19 @@ mybatis-plus:
         logic-not-delete-value: 0
       banner: false
 
+redis:
+  host: localhost
+  port: 50007
+  password: 123456
+  database: 0
+  timeout: 5000ms
+  lettuce:
+      pool:
+        max-active: 8
+        max-wait: -1ms
+        max-idle: 8
+        min-idle: 0
+
 springdoc:
   api-docs:
     path: /v3/api-docs

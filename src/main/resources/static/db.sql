@@ -226,18 +226,19 @@ INSERT INTO reservation (
 );
 
 -- 1.3 插入门禁设备
-INSERT INTO access_device (location, ip_address, mac_address, status, device_type, description)
+INSERT INTO access_device (device_id,location, ip_address, mac_address, status, device_type, description)
 VALUES 
-('校园正门', '192.168.1.101', '00:1A:2B:3C:4D:5E', 'online', 'campus_gate', '校园主入口门禁'),
-('校园西门', '192.168.1.102', '00:1A:2B:3C:4D:5F', 'online', 'campus_gate', '校园侧门门禁'),
-('行政楼大厅', '192.168.1.105', '00:1A:2B:3C:4D:62', 'online', 'management', 'RFID卡发放设备');
+('1','校园正门', '192.168.1.101', '00:1A:2B:3C:4D:5E', 'online', 'campus_gate', '校园主入口门禁'),
+('2','校园西门', '192.168.1.102', '00:1A:2B:3C:4D:5F', 'online', 'campus_gate', '校园侧门门禁'),
+('3','行政楼大厅', '192.168.1.103', '00:1A:2B:3C:4D:62', 'online', 'management', 'RFID卡发放设备'),
+('4','校院正门管理处', '192.168.1.104', '00:1A:2B:3C:4D:63', 'online', 'management', '校园正门管理处');
 
 -- 1.4 插入管理员信息
 INSERT INTO visitor (
     name, phone, id_type, id_number, role, account_status, 
     password_hash, create_time
 ) VALUES (
-    '阿明', '1', 'id_card', 'ADMIN001',
+    '阿明', '1', 'school_id', 'ADMIN001',
     'admin', 'normal',
     'pmWkWSBCL51Bfkhn79xPuKBKHz//H6B+mY6G9/eieuM=', -- SHA256：123
     '2025-01-01 00:00:00'
@@ -249,8 +250,8 @@ INSERT INTO rfid_card (uid, status, create_time, remarks) VALUES
 ('E508C401', 'available', '2025-01-01 00:00:00', '蓝卡'),
 ('5041ACD9', 'available', '2025-01-01 00:00:00', '岭南通'),
 ('89486741', 'available', '2025-01-01 00:00:00', '深圳通'),
-('RFID_TEST_005', 'available', '2025-01-01 00:00:00', '新登记卡片'),
-('RFID_TEST_006', 'available', '2025-01-01 00:00:00', '新登记卡片');
+('RFID_TEST_001', 'available', '2025-01-01 00:00:00', 'TEST_001'),
+('RFID_TEST_002', 'available', '2025-01-01 00:00:00', 'TEST_002');
 
 -- 2. 按时序插入测试数据
 
@@ -307,17 +308,17 @@ SET status = 'confirmed',
 WHERE reservation_id = @reservation_id;
 
 -- 记录审核操作
-INSERT INTO operation_log (
-    operator_id, operation_type, target_id,
-    operation_time, details
-) VALUES (
-    1, 'APPROVE_RESERVATION', @reservation_id,
-    '2025-02-09 14:00:00',
-    JSON_OBJECT(
-        'reservation_id', @reservation_id,
-        'status', 'confirmed'
-    )
-);
+-- INSERT INTO operation_log (
+--     operator_id, operation_type, target_id,
+--     operation_time, details
+-- ) VALUES (
+--     1, 'APPROVE_RESERVATION', @reservation_id,
+--     '2025-02-09 14:00:00',
+--     JSON_OBJECT(
+--         'reservation_id', @reservation_id,
+--         'status', 'confirmed'
+--     )
+-- );
 
 -- 2.5 访客领取RFID卡(2025-02-10 09:30:00)
 UPDATE rfid_card 
@@ -349,14 +350,14 @@ INSERT INTO access_log (
 );
 
 -- 记录MQTT消息
-INSERT INTO message_log (
-    device_id, payload, receive_time, status
-) VALUES (
-    1,
-    '{"uid":"RFID_TEST_001","action":"entry","timestamp":"2025-02-10 09:45:00"}',
-    '2025-02-10 09:45:05',
-    'processed'
-);
+-- INSERT INTO message_log (
+--     device_id, payload, receive_time, status
+-- ) VALUES (
+--     1,
+--     '{"uid":"RFID_TEST_001","action":"entry","timestamp":"2025-02-10 09:45:00"}',
+--     '2025-02-10 09:45:05',
+--     'processed'
+-- );
 
 -- 2.6.2 正常进入(2025-02-10 10:05:00)
 INSERT INTO access_log (
@@ -369,14 +370,14 @@ INSERT INTO access_log (
 );
 
 -- 记录MQTT消息
-INSERT INTO message_log (
-    device_id, payload, receive_time, status
-) VALUES (
-    1,
-    '{"uid":"RFID_TEST_001","action":"entry","timestamp":"2025-02-10 10:05:00"}',
-    '2025-02-10 10:05:05',
-    'processed'
-);
+-- INSERT INTO message_log (
+--     device_id, payload, receive_time, status
+-- ) VALUES (
+--     1,
+--     '{"uid":"RFID_TEST_001","action":"entry","timestamp":"2025-02-10 10:05:00"}',
+--     '2025-02-10 10:05:05',
+--     'processed'
+-- );
 
 -- 2.6.3 预约结束后离开(2025-02-10 19:30:00)
 INSERT INTO access_log (
@@ -389,14 +390,14 @@ INSERT INTO access_log (
 );
 
 -- 记录MQTT消息
-INSERT INTO message_log (
-    device_id, payload, receive_time, status
-) VALUES (
-    1,
-    '{"uid":"RFID_TEST_001","action":"exit","timestamp":"2025-02-10 19:30:00"}',
-    '2025-02-10 19:30:05',
-    'processed'
-);
+-- INSERT INTO message_log (
+--     device_id, payload, receive_time, status
+-- ) VALUES (
+--     1,
+--     '{"uid":"RFID_TEST_001","action":"exit","timestamp":"2025-02-10 19:30:00"}',
+--     '2025-02-10 19:30:05',
+--     'processed'
+-- );
 
 -- 2.7 访客归还RFID卡(2025-02-10 19:35:00)
 UPDATE rfid_card 
@@ -416,15 +417,164 @@ INSERT INTO rfid_card_record (
 );
 
 -- 记录归还操作日志
-INSERT INTO operation_log (
-    operator_id, operation_type, target_id,
-    operation_time, details
+# INSERT INTO operation_log (
+#     operator_id, operation_type, target_id,
+#     operation_time, details
+# ) VALUES (
+#     1, 'RETURN_RFID', 1,
+#     '2025-02-10 19:35:00',
+#     JSON_OBJECT(
+#         'card_uid', 'RFID_TEST_001',
+#         'visitor_id', @visitor_id,
+#         'status', 'returned'
+#     )
+# );
+
+
+-- 3. 更多测试数据(2025-01-01 到 2025-03-31)
+
+-- 3.1 添加更多访客
+INSERT INTO visitor (
+    visitor_id,name, phone, id_type, id_number, role,
+    account_status, password_hash, create_time
+) VALUES 
+('3','张三', '3', 'id_card', '440101199001011235', 'visitor', 'normal',
+ 'pmWkWSBCL51Bfkhn79xPuKBKHz//H6B+mY6G9/eieuM=', '2025-01-05 09:00:00'),
+('4','李四', '4', 'passport', 'P1234567', 'visitor', 'normal',
+ 'pmWkWSBCL51Bfkhn79xPuKBKHz//H6B+mY6G9/eieuM=', '2025-01-10 14:30:00'),
+('5','王五', '5', 'school_id', '2025001', 'visitor', 'normal',
+ 'pmWkWSBCL51Bfkhn79xPuKBKHz//H6B+mY6G9/eieuM=', '2025-01-15 11:20:00'),
+('6','赵六', '6', 'id_card', '440101199001011236', 'visitor', 'blacklist',
+ 'pmWkWSBCL51Bfkhn79xPuKBKHz//H6B+mY6G9/eieuM=', '2025-02-01 16:45:00');
+
+-- 3.2 设置每日配额
+INSERT INTO quota_setting (
+    date, max_quota, current_count, special_event, is_holiday, create_time
+) VALUES 
+('2025-01-20', 50, 2, '开学日', false, '2025-01-19 09:00:00'),
+('2025-02-14', 80, 12, '情人节', true, '2025-02-13 10:15:00'),
+('2025-02-15', 100, 45, '周末', true, '2025-02-13 11:30:00'),
+('2025-02-16', 120, 67, '周末', true, '2025-02-13 14:20:00'),
+('2025-02-17', 150, 89, '正常工作日', false, '2025-02-13 15:45:00'),
+('2025-02-18', 100, 34, '正常工作日', false, '2025-02-13 16:30:00'),
+('2025-02-19', 80, 23, '正常工作日', false, '2025-02-13 09:45:00'),
+('2025-02-20', 60, 15, '正常工作日', false, '2025-02-13 10:30:00'),
+('2025-02-21', 50, 8, '正常工作日', false, '2025-02-13 11:15:00'),
+('2025-02-22', 70, 25, '周末', true, '2025-02-13 14:00:00'),
+('2025-02-23', 70, 31, '周末', true, '2025-02-13 15:20:00'),
+('2025-02-24', 50, 12, '正常工作日', false, '2025-02-13 16:40:00'),
+('2025-02-25', 50, 18, '正常工作日', false, '2025-02-13 09:30:00'),
+('2025-02-26', 50, 22, '正常工作日', false, '2025-02-13 10:45:00'),
+('2025-02-27', 50, 15, '正常工作日', false, '2025-02-13 11:50:00'),
+('2025-02-28', 50, 28, '正常工作日', false, '2025-02-13 14:15:00'),
+('2025-03-01', 70, 45, '周末', true, '2025-02-13 15:30:00'),
+('2025-03-02', 70, 38, '周末', true, '2025-02-13 16:20:00'),
+('2025-03-03', 50, 17, '正常工作日', false, '2025-02-13 09:40:00'),
+('2025-03-04', 50, 23, '正常工作日', false, '2025-02-13 10:50:00'),
+('2025-03-05', 50, 19, '正常工作日', false, '2025-02-13 11:25:00'),
+('2025-03-06', 50, 27, '正常工作日', false, '2025-02-13 14:35:00'),
+('2025-03-07', 50, 31, '正常工作日', false, '2025-02-13 15:50:00'),
+('2025-03-08', 70, 42, '妇女节', true, '2025-02-13 16:15:00'),
+('2025-03-09', 70, 35, '周末', true, '2025-02-13 09:20:00'),
+('2025-03-10', 50, 21, '正常工作日', false, '2025-02-13 10:40:00'),
+('2025-03-11', 50, 18, '正常工作日', false, '2025-02-13 11:55:00'),
+('2025-03-12', 50, 25, '正常工作日', false, '2025-02-13 14:25:00'),
+('2025-03-13', 50, 29, '正常工作日', false, '2025-02-13 15:40:00'),
+('2025-03-14', 50, 16, '正常工作日', false, '2025-02-13 16:35:00'),
+('2025-03-15', 70, 48, '周末', true, '2025-02-13 09:50:00'),
+('2025-03-16', 70, 39, '周末', true, '2025-02-13 10:20:00'),
+('2025-03-17', 50, 22, '正常工作日', false, '2025-02-13 11:35:00'),
+('2025-03-18', 50, 26, '正常工作日', false, '2025-02-13 14:45:00'),
+('2025-03-19', 50, 19, '正常工作日', false, '2025-02-13 15:15:00'),
+('2025-03-20', 50, 24, '正常工作日', false, '2025-02-13 16:25:00'),
+('2025-03-21', 50, 28, '正常工作日', false, '2025-02-13 09:35:00'),
+('2025-03-22', 70, 41, '周末', true, '2025-02-13 10:55:00'),
+('2025-03-23', 70, 37, '周末', true, '2025-02-13 11:40:00'),
+('2025-03-24', 50, 20, '正常工作日', false, '2025-02-13 14:55:00'),
+('2025-03-25', 50, 23, '正常工作日', false, '2025-02-13 15:25:00');
+
+-- 3.5 添加预测数据
+INSERT INTO prediction (
+    predict_date, predicted_count, accuracy, actual_count,
+    confidence, factors, model_version
+) VALUES 
+('2025-01-20', 45, 92.5, 42, 85.0,
+ '{"is_holiday": false, "special_event": "开学日", "weather": "sunny", "remarks": "开学日家长陪同"}',
+ 'v1.0.0'),
+('2025-02-14', 75, 94.0, 78, 88.0,
+ '{"is_holiday": true, "special_event": "情人节", "weather": "cloudy", "remarks": "情人节活动人流量增加"}',
+ 'v1.0.0'),
+('2025-02-15', 95, 91.5, 98, 86.0,
+ '{"is_holiday": true, "special_event": "周末", "weather": "sunny", "remarks": "周末购物人流量大"}',
+ 'v1.0.0'),
+('2025-02-22', 68, 89.0, 65, 84.0,
+ '{"is_holiday": true, "special_event": "周末", "weather": "rainy", "remarks": "雨天人流量减少"}',
+ 'v1.0.0'),
+('2025-02-23', 72, 93.0, 70, 87.0,
+ '{"is_holiday": true, "special_event": "周末", "weather": "sunny", "remarks": "春季周末游客增多"}',
+ 'v1.0.0'),
+('2025-02-24', 55, 90.0, 50, 85.0,
+ '{"is_holiday": false, "special_event": "正常工作日", "weather": "sunny", "remarks": "正常工作日人流"}',
+ 'v1.0.0'),
+('2025-02-25', 60, 92.0, 58, 86.0,
+ '{"is_holiday": false, "special_event": "正常工作日", "weather": "cloudy", "remarks": "正常工作日人流"}',
+ 'v1.0.0'),
+('2025-02-26', 65, 91.0, 62, 84.0,
+ '{"is_holiday": false, "special_event": "正常工作日", "weather": "sunny", "remarks": "正常工作日人流"}',
+ 'v1.0.0'),
+('2025-02-27', 70, 93.5, 68, 87.0,
+ '{"is_holiday": false, "special_event": "正常工作日", "weather": "cloudy", "remarks": "正常工作日人流"}',
+ 'v1.0.0'),
+('2025-02-28', 50, 94.0, 47, 88.0,
+ '{"is_holiday": false, "special_event": "正常工作日", "weather": "sunny", "remarks": "正常工作日人流"}',
+ 'v1.0.0');
+
+-- 3.6 模拟张三的访问记录
+-- 预约
+INSERT INTO reservation (
+    visitor_id, reason, host_department, host_name,
+    start_time, end_time, host_confirm, status,
+    create_time
 ) VALUES (
-    1, 'RETURN_RFID', 1,
-    '2025-02-10 19:35:00',
-    JSON_OBJECT(
-        'card_uid', 'RFID_TEST_001',
-        'visitor_id', @visitor_id,
-        'status', 'returned'
-    )
+    '3', '项目洽谈', '计算机学院', '刘老师',
+    '2025-02-22 00:00:00', '2025-02-22 23:59:59',
+    'pending', 'pending',
+    '2025-01-20 09:30:00'
 );
+-- 审核
+SET @reservation_id = LAST_INSERT_ID();
+UPDATE reservation
+SET status = 'confirmed',
+    host_confirm = 'confirmed',
+    update_time = '2025-01-20 14:00:00'
+WHERE reservation_id = @reservation_id;
+-- 领取RFID卡
+# UPDATE rfid_card
+# SET status = 'issued',
+#     update_time = '2025-02-22 09:30:00'
+# WHERE uid = '21D43902';
+# -- 记录发卡操作
+# INSERT INTO rfid_card_record (
+#     card_id, reservation_id, admin_id,
+#     operation_type, issue_time, expiration_time,
+#     create_time
+# ) VALUES (
+#     1, @reservation_id, 1,
+#     'issue', '2025-02-22 09:30:00', '2025-02-22 23:59:59',
+#     '2025-02-22 09:30:00'
+# );
+# -- 归还RFID卡
+# UPDATE rfid_card
+# SET status = 'available',
+#     update_time = '2025-02-22 23:59:59'
+# WHERE uid = '21D43902';
+# -- 记录还卡操作
+# INSERT INTO rfid_card_record (
+#     card_id, reservation_id, admin_id,
+#     operation_type, return_time,
+#     create_time
+# ) VALUES (
+#     1, @reservation_id, 1,
+#     'return', '2025-02-22 23:59:59',
+#     '2025-02-22 23:59:59'
+# );
