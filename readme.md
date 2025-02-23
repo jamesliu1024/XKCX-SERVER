@@ -171,7 +171,7 @@ quere|设备号|uid|时间戳
 Topic: xkck/device/{device_id}/command
 - 服务器命令 (服务器 -> 设备)
 ```
-quere|设备号|uid|操作（issue、return、add）|时间戳
+quere|设备号|uid|操作（issued、returned、added）|时间戳
 ```
 注意：
   - 只有管理设备会收到这条命令

@@ -67,35 +67,48 @@ public class CardOperationServiceImpl implements CardOperationService {
                     if (data.getUid() != null) {
                         // 先验证卡片是否存在
                         RfidCard card = rfidCardService.getCardByUid(data.getUid());
-                        if (card == null) {
-                            log.error("Card not found in database: {}", data.getUid());
-                            redisTemplate.delete(redisKey);
-                            return CompletableFuture.completedFuture(false);
-                        }
-
+                        
                         // 执行卡片操作
                         boolean success = false;
-                        if ("issue".equals(data.getOperationType())) {
-                            // 验证卡片状态是否为可用
-                            if (!"available".equals(card.getStatus())) {
-                                log.error("Card is not available for issue: {}, current status: {}", data.getUid(), card.getStatus());
+                        if ("add".equals(data.getOperationType())) {
+                            if (card != null) {
+                                log.error("Card already exists in database: {}", data.getUid());
                                 redisTemplate.delete(redisKey);
                                 return CompletableFuture.completedFuture(false);
                             }
-                            success = processIssueCard(card, data, reservation);
+                            success = processAddCard(data);
                             if (success) {
-                                sendCardOperationMessage(data.getDeviceId(), data.getUid(), "issued");
+                                sendCardOperationMessage(data.getDeviceId(), data.getUid(), "added");
                             }
-                        } else if ("return".equals(data.getOperationType())) {
-                            // 验证卡片状态是否为已发放
-                            if (!"issued".equals(card.getStatus())) {
-                                log.error("Card is not in issued status for return: {}, current status: {}", data.getUid(), card.getStatus());
+                        } else {
+                            if (card == null) {
+                                log.error("Card not found in database: {}", data.getUid());
                                 redisTemplate.delete(redisKey);
                                 return CompletableFuture.completedFuture(false);
                             }
-                            success = processReturnCard(card, data);
-                            if (success) {
-                                sendCardOperationMessage(data.getDeviceId(), data.getUid(), "returned");
+
+                            if ("issue".equals(data.getOperationType())) {
+                                // 验证卡片状态是否为可用
+                                if (!"available".equals(card.getStatus())) {
+                                    log.error("Card is not available for issue: {}, current status: {}", data.getUid(), card.getStatus());
+                                    redisTemplate.delete(redisKey);
+                                    return CompletableFuture.completedFuture(false);
+                                }
+                                success = processIssueCard(card, data, reservation);
+                                if (success) {
+                                    sendCardOperationMessage(data.getDeviceId(), data.getUid(), "issued");
+                                }
+                            } else if ("return".equals(data.getOperationType())) {
+                                // 验证卡片状态是否为已发放
+                                if (!"issued".equals(card.getStatus())) {
+                                    log.error("Card is not in issued status for return: {}, current status: {}", data.getUid(), card.getStatus());
+                                    redisTemplate.delete(redisKey);
+                                    return CompletableFuture.completedFuture(false);
+                                }
+                                success = processReturnCard(card, data);
+                                if (success) {
+                                    sendCardOperationMessage(data.getDeviceId(), data.getUid(), "returned");
+                                }
                             }
                         }
                         // 操作成功后删除Redis数据
@@ -118,6 +131,23 @@ public class CardOperationServiceImpl implements CardOperationService {
             log.error("Error processing card operation: ", e);
             redisTemplate.delete(redisKey);
             return CompletableFuture.completedFuture(false);
+        }
+    }
+
+    private boolean processAddCard(CardOperationDTO data) {
+        try {
+            // 创建新卡片
+            RfidCard newCard = new RfidCard();
+            newCard.setUid(data.getUid());
+            newCard.setStatus("available");
+            newCard.setRemarks(data.getRemarks());
+            rfidCardService.save(newCard);
+
+            log.info("New card added successfully: {}", data.getUid());
+            return true;
+        } catch (Exception e) {
+            log.error("Error processing add card: ", e);
+            return false;
         }
     }
 

@@ -584,4 +584,44 @@ public class AdminController {
             return ApiResult.error("紧急控制操作失败");
         }
     }
+
+    @PostMapping("/card/add")
+    @Operation(summary = "添加新卡片", description = "管理员添加新卡片接口")
+    public ApiResult<String> addCard(
+            @Parameter(description = "设备ID") @RequestParam Integer deviceId,
+            @Parameter(description = "管理员ID") @RequestParam Integer adminId,
+            @Parameter(description = "卡片备注") @RequestParam(required = false) String remarks) {
+        try {
+            // 验证设备是否存在且为管理设备
+            AccessDevice device = accessDeviceService.getById(deviceId);
+            if (device == null) {
+                return ApiResult.error("设备不存在");
+            }
+            if (!"management".equals(device.getDeviceType())) {
+                return ApiResult.error("该设备不是管理设备，无法进行卡片管理操作");
+            }
+
+            // 准备Redis数据
+            CardOperationDTO operationDTO = new CardOperationDTO();
+            operationDTO.setAdminId(adminId);
+            operationDTO.setOperationType("add");
+            operationDTO.setDeviceId(deviceId.toString());
+            if (remarks != null) {
+                operationDTO.setRemarks(remarks);
+            }
+
+            // 存储到Redis
+            String redisKey = "card_operation:" + deviceId;
+            redisTemplate.opsForValue().set(redisKey, operationDTO, 5, TimeUnit.MINUTES);
+
+            // 启动异步处理
+            cardOperationService.processCardOperation(redisKey, null);
+
+            String result = "请60秒内将新卡片放在 " + deviceId + " 号设备上";
+            return ApiResult.success(result);
+        } catch (Exception e) {
+            log.error("Error adding new card: ", e);
+            return ApiResult.error("添加新卡片操作失败");
+        }
+    }
 } 
