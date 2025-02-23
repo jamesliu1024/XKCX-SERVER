@@ -12,6 +12,7 @@ import seig.ljm.xkckserver.mqtt.dto.CardOperationDTO;
 import seig.ljm.xkckserver.service.RfidCardRecordService;
 import seig.ljm.xkckserver.service.RfidCardService;
 import seig.ljm.xkckserver.service.CardOperationService;
+import seig.ljm.xkckserver.mqtt.MQTTGateway;
 
 import java.time.ZonedDateTime;
 import java.util.concurrent.CompletableFuture;
@@ -24,16 +25,30 @@ public class CardOperationServiceImpl implements CardOperationService {
     private final ObjectMapper objectMapper;
     private final RfidCardService rfidCardService;
     private final RfidCardRecordService rfidCardRecordService;
+    private final MQTTGateway mqttGateway;
 
     public CardOperationServiceImpl(
             RedisTemplate<String, Object> redisTemplate,
             ObjectMapper objectMapper,
             RfidCardService rfidCardService,
-            RfidCardRecordService rfidCardRecordService) {
+            RfidCardRecordService rfidCardRecordService,
+            MQTTGateway mqttGateway) {
         this.redisTemplate = redisTemplate;
         this.objectMapper = objectMapper;
         this.rfidCardService = rfidCardService;
         this.rfidCardRecordService = rfidCardRecordService;
+        this.mqttGateway = mqttGateway;
+    }
+
+    private void sendCardOperationMessage(String deviceId, String uid, String operationType) {
+        try {
+            long timestamp = System.currentTimeMillis() / 1000;
+            String message = String.format("quere|%s|%s|%s|%d", deviceId, uid, operationType, timestamp);
+            mqttGateway.sendToMqtt("xkck/device/" + deviceId + "/command", message);
+            log.info("Sent card operation message: {} to device: {}", message, deviceId);
+        } catch (Exception e) {
+            log.error("Error sending card operation message: ", e);
+        }
     }
 
     @Async("cardOperationExecutor")
@@ -63,6 +78,9 @@ public class CardOperationServiceImpl implements CardOperationService {
                                 return CompletableFuture.completedFuture(false);
                             }
                             success = processIssueCard(card, data, reservation);
+                            if (success) {
+                                sendCardOperationMessage(data.getDeviceId(), data.getUid(), "issue");
+                            }
                         } else if ("return".equals(data.getOperationType())) {
                             // 验证卡片状态是否为已发放
                             if (!"issued".equals(card.getStatus())) {
@@ -71,6 +89,9 @@ public class CardOperationServiceImpl implements CardOperationService {
                                 return CompletableFuture.completedFuture(false);
                             }
                             success = processReturnCard(card, data);
+                            if (success) {
+                                sendCardOperationMessage(data.getDeviceId(), data.getUid(), "return");
+                            }
                         }
                         // 操作成功后删除Redis数据
                         if (success) {

@@ -468,17 +468,9 @@ public class MQTTMessageServiceImpl implements MQTTMessageService {
                 return;
             }
 
-            Integer deviceId = Integer.parseInt(parts[1]);
+            String deviceId = parts[1];
             String uid = parts[2];
             
-            // 根据UID查询卡片信息
-//            RfidCard card = rfidCardService.getCardByUid(uid);
-//            if (card == null) {
-//                log.warn("未找到UID为{}的卡片信息", uid);
-//            } else {
-//                log.info("找到UID为{}的卡片,卡片ID为{}", uid, card.getCardId());
-//            }
-
             // 构建Redis键
             String redisKey = "card_operation:" + deviceId;
             
@@ -487,6 +479,7 @@ public class MQTTMessageServiceImpl implements MQTTMessageService {
             if (redisData != null) {
                 CardOperationDTO operationDTO = objectMapper.convertValue(redisData, CardOperationDTO.class);
                 operationDTO.setUid(uid);
+                operationDTO.setDeviceId(deviceId);  // 设置设备号
                 
                 // 更新Redis数据
                 redisTemplate.opsForValue().set(redisKey, operationDTO);

@@ -163,11 +163,15 @@ vere|allow或者deny|时间戳
 ```
 
 #### 3. 读取卡片 发卡、还卡或者查询、新增卡片
-
 Topic: xkck/device/{device_id}/response
 - 卡片信息查询 (管理设备 -> 服务器) 
 ```
 quere|设备号|uid|时间戳
+```
+Topic: xkck/device/{device_id}/command
+- 服务器命令 (服务器 -> 设备)
+```
+quere|设备号|uid|操作（issue、return、add）|时间戳
 ```
 注意：
   - 只有管理设备会收到这条命令
