@@ -17,6 +17,9 @@ import com.alibaba.fastjson.JSON;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import seig.ljm.xkckserver.common.utils.RedisUtil;
 import seig.ljm.xkckserver.mqtt.MQTTGateway;
+import org.springframework.data.redis.core.RedisTemplate;
+import seig.ljm.xkckserver.mqtt.dto.CardOperationDTO;
+import seig.ljm.xkckserver.service.impl.CardOperationServiceImpl;
 
 import java.time.LocalDate;
 import java.time.ZonedDateTime;
@@ -46,6 +49,8 @@ public class AdminController {
     private final RedisUtil redisUtil;
     private final MQTTGateway mqttGateway;
     private final ObjectMapper objectMapper;
+    private final RedisTemplate<String, Object> redisTemplate;
+    private final CardOperationService cardOperationService;
 
     // 1. 用户管理相关接口
     @GetMapping("/visitor/{visitorId}")
@@ -360,5 +365,178 @@ public class AdminController {
         return ApiResult.success(operationLogService.getLogPage(current, size, null, operationType, null,
             date != null ? date.atStartOfDay(TimeZoneConstant.ZONE_ID) : null,
             date != null ? date.plusDays(1).atStartOfDay(TimeZoneConstant.ZONE_ID) : null));
+    }
+
+    @PostMapping("/card/issue")
+    @Operation(summary = "发卡操作", description = "管理员发卡操作接口")
+    public ApiResult<String> issueCard(
+            @RequestParam Integer deviceId,
+            @RequestParam Integer reservationId,
+            @RequestParam Integer adminId) {
+        try {
+            // 验证预约信息
+            Reservation reservation = reservationService.getById(reservationId);
+            if (reservation == null) {
+                return ApiResult.error("预约记录不存在");
+            }
+            if (!reservation.getStatus().equals("confirmed")) {
+                return ApiResult.error("预约未确认");
+            }
+
+            // 准备Redis数据
+            CardOperationDTO operationDTO = new CardOperationDTO();
+            operationDTO.setReservationId(reservationId);
+            operationDTO.setAdminId(adminId);
+            operationDTO.setOperationType("issue");
+
+            // 存储到Redis
+            String redisKey = "card_operation:" + deviceId;
+            redisTemplate.opsForValue().set(redisKey, operationDTO, 5, TimeUnit.MINUTES);
+
+            // 发送MQTT消息
+            // String message = String.format("query|%d|%d", deviceId, System.currentTimeMillis() / 1000);
+            // mqttGateway.sendToMqtt("xkck/device/" + deviceId + "/query", message);
+
+            // 启动异步处理
+            cardOperationService.processCardOperation(redisKey, reservation);
+
+            String result = "请60秒内将卡片放在 " + deviceId + " 号设备上";
+            return ApiResult.success(result);
+        } catch (Exception e) {
+            log.error("Error issuing card: ", e);
+            return ApiResult.error("发卡操作失败");
+        }
+    }
+
+    @PostMapping("/card/return")
+    @Operation(summary = "还卡操作", description = "管理员还卡操作接口")
+    public ApiResult<String> returnCard(
+            @RequestParam Integer deviceId,
+            @RequestParam Integer reservationId,
+            @RequestParam Integer adminId) {
+        try {
+            // 验证预约信息
+            Reservation reservation = reservationService.getById(reservationId);
+            if (reservation == null) {
+                return ApiResult.error("预约记录不存在");
+            }
+
+            // 准备Redis数据
+            CardOperationDTO operationDTO = new CardOperationDTO();
+            operationDTO.setReservationId(reservationId);
+            operationDTO.setAdminId(adminId);
+            operationDTO.setOperationType("return");
+
+            // 存储到Redis
+            String redisKey = "card_operation:" + deviceId;
+            redisTemplate.opsForValue().set(redisKey, operationDTO, 5, TimeUnit.MINUTES);
+
+            // 发送MQTT消息
+            // String message = String.format("query|%d|%d", deviceId, System.currentTimeMillis() / 1000);
+            // mqttGateway.sendToMqtt("xkck/device/" + deviceId + "/query", message);
+
+            // 启动异步处理
+            cardOperationService.processCardOperation(redisKey, reservation);
+
+            String result = "请60秒内将卡片放在 " + deviceId + " 号设备上";
+            return ApiResult.success(result);
+        } catch (Exception e) {
+            log.error("Error returning card: ", e);
+            return ApiResult.error("还卡操作失败");
+        }
+    }
+
+    @PostMapping("/device/temp-control")
+    @Operation(summary = "临时控制门禁", description = "管理员临时控制指定设备开关门")
+    public ApiResult<String> tempControl(
+            @Parameter(description = "设备ID") @RequestParam Integer deviceId,
+            @Parameter(description = "操作类型：open/close") @RequestParam String action,
+            @Parameter(description = "持续时间（秒）") @RequestParam Integer duration,
+            @Parameter(description = "管理员ID") @RequestParam Integer adminId) {
+        try {
+            // 验证设备是否存在且在线
+            AccessDevice device = accessDeviceService.getById(deviceId);
+            if (device == null) {
+                return ApiResult.error("设备不存在");
+            }
+            if (!"online".equals(device.getStatus())) {
+                return ApiResult.error("设备不在线");
+            }
+
+            // 验证操作类型
+            if (!"open".equals(action) && !"close".equals(action)) {
+                return ApiResult.error("无效的操作类型，只能是 open 或 close");
+            }
+
+            // 验证持续时间
+            if (duration <= 0 || duration > 3600) { // 最长1小时
+                return ApiResult.error("持续时间必须在1-3600秒之间");
+            }
+
+            // 发送MQTT消息
+            long timestamp = System.currentTimeMillis() / 1000;
+            String message = String.format("temp|%d|%s|%d|%d", deviceId, action, duration, timestamp);
+            mqttGateway.sendToMqtt("xkck/device/" + deviceId + "/command", message);
+
+            // 记录操作日志
+            OperationLog log = new OperationLog();
+            log.setOperatorId(adminId);
+            log.setOperationType("TEMP_CONTROL");
+            log.setTargetId(deviceId);
+            log.setDetails(String.format("临时%s门，持续%d秒", "open".equals(action) ? "开" : "关", duration));
+            operationLogService.save(log);
+
+            return ApiResult.success(String.format("已发送临时%s门命令，持续%d秒", "open".equals(action) ? "开" : "关", duration));
+        } catch (Exception e) {
+            log.error("Error in temp control: ", e);
+            return ApiResult.error("临时控制操作失败");
+        }
+    }
+
+    @PostMapping("/device/emergency-control")
+    @Operation(summary = "紧急控制门禁", description = "管理员紧急控制门禁开关，可控制单个设备或所有设备")
+    public ApiResult<String> emergencyControl(
+            @Parameter(description = "设备ID，0表示所有设备") @RequestParam Integer deviceId,
+            @Parameter(description = "操作类型：open/close") @RequestParam String action,
+            @Parameter(description = "管理员ID") @RequestParam Integer adminId,
+            @Parameter(description = "紧急原因") @RequestParam String reason) {
+        try {
+            // 验证操作类型
+            if (!"open".equals(action) && !"close".equals(action)) {
+                return ApiResult.error("无效的操作类型，只能是 open 或 close");
+            }
+
+            // 如果不是控制所有设备，则验证单个设备是否存在
+            if (deviceId != 0) {
+                AccessDevice device = accessDeviceService.getById(deviceId);
+                if (device == null) {
+                    return ApiResult.error("设备不存在");
+                }
+            }
+
+            // 发送MQTT消息
+            long timestamp = System.currentTimeMillis() / 1000;
+            String message = String.format("emgcy|%d|%s|%d", deviceId, action, timestamp);
+            mqttGateway.sendToMqtt("xkck/device/emergency", message);
+
+            // 记录操作日志
+            OperationLog log = new OperationLog();
+            log.setOperatorId(adminId);
+            log.setOperationType("EMERGENCY_CONTROL");
+            log.setTargetId(deviceId);
+            log.setDetails(String.format("紧急%s门，设备ID：%s，原因：%s", 
+                "open".equals(action) ? "开" : "关", 
+                deviceId == 0 ? "全部" : deviceId,
+                reason));
+            operationLogService.save(log);
+
+            String resultMessage = String.format("已发送紧急%s门命令，设备：%s", 
+                "open".equals(action) ? "开" : "关",
+                deviceId == 0 ? "全部设备" : "设备" + deviceId);
+            return ApiResult.success(resultMessage);
+        } catch (Exception e) {
+            log.error("Error in emergency control: ", e);
+            return ApiResult.error("紧急控制操作失败");
+        }
     }
 } 

@@ -5,6 +5,7 @@ import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import seig.ljm.xkckserver.common.constant.TimeZoneConstant;
 import seig.ljm.xkckserver.entity.AccessDevice;
@@ -33,6 +34,7 @@ public class MQTTMessageServiceImpl implements MQTTMessageService {
     private final AccessLogService accessLogService;
     private final DelayedMqttService delayedMqttService;
     private final ReservationService reservationService;
+    private final RedisTemplate<String, Object> redisTemplate;
 
     @Autowired
     public MQTTMessageServiceImpl(
@@ -44,7 +46,8 @@ public class MQTTMessageServiceImpl implements MQTTMessageService {
             MQTTGateway mqttGateway,
             AccessLogService accessLogService,
             DelayedMqttService delayedMqttService,
-            ReservationService reservationService) {
+            ReservationService reservationService,
+            RedisTemplate<String, Object> redisTemplate) {
         this.objectMapper = objectMapper;
         this.messageLogService = messageLogService;
         this.rfidCardService = rfidCardService;
@@ -54,6 +57,7 @@ public class MQTTMessageServiceImpl implements MQTTMessageService {
         this.accessLogService = accessLogService;
         this.delayedMqttService = delayedMqttService;
         this.reservationService = reservationService;
+        this.redisTemplate = redisTemplate;
     }
 
     @Override
@@ -98,6 +102,10 @@ public class MQTTMessageServiceImpl implements MQTTMessageService {
                         break;
                     case "status_report":
                         handleStatusReport(payload);
+                        messageLog.setStatus("processed");
+                        break;
+                    case "quere":
+                        handleQueryCardReply(payload);
                         messageLog.setStatus("processed");
                         break;
                     default:
@@ -450,7 +458,39 @@ public class MQTTMessageServiceImpl implements MQTTMessageService {
         }
     }
 
-    
+    @Override
+    public void handleQueryCardReply(String payload) {
+        try {
+            // 解析消息格式：quere|设备号|uid|时间戳
+            String[] parts = payload.split("\\|");
+            if (parts.length < 4 || !parts[0].equals("quere")) {
+                log.error("Invalid query card reply message format: {}", payload);
+                return;
+            }
+
+            Integer deviceId = Integer.parseInt(parts[1]);
+            String uid = parts[2];
+            
+            // 构建Redis键
+            String redisKey = "card_operation:" + deviceId;
+            
+            // 从Redis获取操作数据
+            Object redisData = redisTemplate.opsForValue().get(redisKey);
+            if (redisData != null) {
+                CardOperationDTO operationDTO = objectMapper.convertValue(redisData, CardOperationDTO.class);
+                operationDTO.setUid(uid);
+                
+                // 更新Redis数据
+                redisTemplate.opsForValue().set(redisKey, operationDTO);
+                log.info("Updated card operation data for device {}: {}", deviceId, operationDTO);
+            } else {
+                log.warn("No card operation data found for device: {}", deviceId);
+            }
+            
+        } catch (Exception e) {
+            log.error("Error handling query card reply message: ", e);
+        }
+    }
 
     @Data
     private static class EmergencyControlData {

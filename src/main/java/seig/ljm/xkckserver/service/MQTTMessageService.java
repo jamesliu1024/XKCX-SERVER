@@ -39,6 +39,12 @@ public interface MQTTMessageService {
     void handleVerify(String payload);
 
     /**
+     * 处理查询卡片回复消息
+     * @param payload 消息内容
+     */
+    void handleQueryCardReply(String payload);
+
+    /**
      * 发送紧急控制命令
      * @param deviceId 设备ID
      * @param action 动作（emergency_open或emergency_close）

@@ -39,10 +39,6 @@ public class ApiResult<T> {
         return new ApiResult<>(200, "操作成功", data);
     }
     
-    public static <T> ApiResult<T> success(String message) {
-        return new ApiResult<>(200, message, null);
-    }
-    
     public static <T> ApiResult<T> success(String message, T data) {
         return new ApiResult<>(200, message, data);
     }
@@ -60,6 +56,9 @@ public class ApiResult<T> {
     }
 
     public static <T> ApiResult<T> fail(String message) {
-        return new ApiResult<>(500, message, null);
+        ApiResult<T> result = new ApiResult<>();
+        result.setCode(500);
+        result.setMessage(message);
+        return result;
     }
 } 

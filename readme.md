@@ -97,6 +97,31 @@
 4. 启动MQTT Broker
 5. 运行SpringBoot应用
 
+## Redis缓存说明
+
+### 缓存键设计
+1. 发卡流程临时数据
+   - 键格式: card_issue:{device_id}
+   - 值类型: Integer (预约ID)
+   - 过期时间: 5分钟
+
+2. 还卡流程临时数据
+   - 键格式: card_return:{device_id}
+   - 值类型: Integer (管理员ID)
+   - 过期时间: 5分钟
+
+### 使用示例
+```java
+// 设置缓存
+redisUtil.set("card_issue:1", reservationId, 5, TimeUnit.MINUTES);
+
+// 获取缓存
+Integer reservationId = (Integer) redisUtil.get("card_issue:1");
+
+// 删除缓存
+redisUtil.delete("card_issue:1");
+```
+
 ## API文档
 详细API文档请参考 [OpenAPI](http://localhost:8123/swagger-ui/index.html#/)
 
@@ -106,7 +131,7 @@
 ```
 xkck/device/{device_id}/status    # 设备状态上报 设备->服务器
 xkck/device/{device_id}/command   # 服务器命令下发 服务器->设备
-xkck/device/{device_id}/response  # 设备响应服务器命令 设备->服务器
+xkck/device/{device_id}/response  # 设备响应服务器命令 设备->服务器 暂时不用
 xkck/device/{device_id}/heartbeat # 设备心跳包 设备->服务器
 xkck/admin/{device_id}/*          # 管理设备专用主题 服务器->设备
 ```
@@ -114,94 +139,57 @@ xkck/admin/{device_id}/*          # 管理设备专用主题 服务器->设备
 ### 消息格式
 
 #### 1. 设备连接确认
-- 设备请求 (设备 -> 服务器)
-```json
-{
-    "type": "connect",
-    "device_id": "1",
-    "data": {
-        "firmware_version": "1.0.0",
-        "ip": "192.168.1.101"
-    }
-}
+Topic: xkck/device/{device_id}/status
+- 设备请求 (设备 -> 服务器) 
+```
 connect|设备号
 ```
-- 服务器响应 (服务器 -> 设备)
-```json
-{
-    "type": "connect_reply",
-    "timestamp": 1645678902,
-    "status": "success",
-    "data": {
-        "device_id": "1",
-        "location": "校园正门",
-        "device_type": "campus_gate",
-        "description": "校园主入口门禁"
-    }
-}
+Topic: xkck/device/{device_id}/command
+- 服务器响应 (服务器 -> 设备) 
+```
 connect_reply|设备号|时间戳
 ```
 
-#### 2. RFID卡片验证
-- 设备请求 (设备 -> 服务器)
-```json
-{
-    "type": "verify",
-    "device_id": "1",
-    "timestamp": 1645678905,
-    "data": {
-        "uid": "RFID_001",
-        "action": "entry"  // entry或exit
-    }
-}
+#### 2. RFID卡片验证开关门
+Topic: xkck/device/{device_id}/status
+- 设备请求 (设备 -> 服务器) 
+```
 verify|设备号|时间戳|uid|entry或exit
 ```
-- 服务器响应 (服务器 -> 设备)
-```json
-{
-    "type": "verify_card_reply",
-    "timestamp": 1645678906,
-    "status": "success",
-    "data": {
-        "allow": true,
-        "visitor_name": "张三",
-        "message": "预约内进入",
-        "action": "open_door", // open_door或deny_access
-        "expire_time": 1645692000
-    }
-}
+Topic: xkck/device/{device_id}/command
+- 服务器响应 (服务器 -> 设备) 
+```
+vere|allow或者deny|时间戳
 ```
 
-#### 3. 管理设备操作
-- 卡片信息查询 (管理设备 -> 服务器)
-```json
-{
-    "type": "query_card",
-    "device_id": "5",
-    "timestamp": 1645678910,
-    "data": {
-        "uid": "RFID_001"
-    }
-}
+#### 3. 读取卡片 发卡、还卡或者查询、新增卡片
+
+Topic: xkck/device/{device_id}/response
+- 卡片信息查询 (管理设备 -> 服务器) 
 ```
-- 服务器响应 (服务器 -> 管理设备)
-```json
-{
-    "type": "query_card_reply",
-    "timestamp": 1645678911,
-    "status": "success",
-    "data": {
-        "uid": "RFID_001",
-        "status": "issued",
-        "visitor_name": "张三",
-        "visitor_id": 1,
-        "reservation_id": 1,
-        "issue_time": "2024-12-20 13:00:00",
-        "expiration_time": "2024-12-20 16:00:00",
-        "remarks": "发放给张三，用于业务洽谈访问"
-    }
-}
+quere|设备号|uid|时间戳
 ```
+注意：
+  - 只有管理设备会收到这条命令
+
+#### 4. 临时控制门禁
+Topic: xkck/device/{device_id}/command
+- 服务器命令 (服务器 -> 设备)
+```
+temp|设备号|开关门|时长|时间戳
+```
+
+#### 5. 紧急控制门禁
+Topic: xkck/device/emergency
+- 服务器命令 (服务器 -> 设备)
+```
+emgcy|设备号|开关门|时间戳
+```
+注意：
+  - 当设备号为0时，表示控制所有设备
+  - 所有设备都会收到这条命令
+
+
 
 #### 4. 设备心跳包
 - 设备发送 (设备 -> 服务器)
