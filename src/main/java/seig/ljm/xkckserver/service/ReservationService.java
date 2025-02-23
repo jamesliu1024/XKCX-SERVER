@@ -179,8 +179,9 @@ public interface ReservationService extends IService<Reservation> {
      * 更新预约状态
      * @param reservationId 预约ID
      * @param status 新状态
+     * @param adminId 操作管理员ID
      */
-    void updateStatus(Integer reservationId, String status);
+    void updateStatus(Integer reservationId, String status, Integer adminId);
 
     /**
      * 获取待审核预约数量

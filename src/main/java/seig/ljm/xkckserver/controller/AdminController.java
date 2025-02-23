@@ -135,9 +135,10 @@ public class AdminController {
     @PutMapping("/reservation/{reservationId}/status")
     @Operation(summary = "更新预约状态")
     public ApiResult<Void> updateReservationStatus(
-            @PathVariable Integer reservationId,
-            @RequestParam String status) {
-        reservationService.updateStatus(reservationId, status);
+            @Parameter(description = "预约ID") @PathVariable Integer reservationId,
+            @Parameter(description = "管理员ID") @RequestParam Integer adminId,
+            @Parameter(description = "预约状态") @RequestBody Map<String, String> body) {
+        reservationService.updateStatus(reservationId, body.get("status"), adminId);
         return ApiResult.success();
     }
 

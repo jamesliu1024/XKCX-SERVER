@@ -9,8 +9,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import seig.ljm.xkckserver.common.constant.TimeZoneConstant;
+import seig.ljm.xkckserver.entity.OperationLog;
 import seig.ljm.xkckserver.entity.Reservation;
 import seig.ljm.xkckserver.mapper.ReservationMapper;
+import seig.ljm.xkckserver.service.OperationLogService;
 import seig.ljm.xkckserver.service.QuotaSettingService;
 import seig.ljm.xkckserver.service.ReservationService;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
@@ -36,6 +38,7 @@ public class ReservationServiceImpl extends ServiceImpl<ReservationMapper, Reser
 
     private final ReservationMapper reservationMapper;
     private final QuotaSettingService quotaSettingService;
+    private final OperationLogService operationLogService;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -238,7 +241,7 @@ public class ReservationServiceImpl extends ServiceImpl<ReservationMapper, Reser
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public void updateStatus(Integer reservationId, String status) {
+    public void updateStatus(Integer reservationId, String status, Integer adminId) {
         Reservation reservation = getById(reservationId);
         if (reservation != null) {
             reservation.setStatus(status);
@@ -259,9 +262,19 @@ public class ReservationServiceImpl extends ServiceImpl<ReservationMapper, Reser
 
             updateById(reservation);
             
-            log.info("Updated reservation {} status to {}", reservationId, status);
+            // 记录操作日志
+            OperationLog operationLog = new OperationLog();
+            operationLog.setOperatorId(adminId);
+            operationLog.setOperationType("UPDATE_RESERVATION_STATUS");
+            operationLog.setTargetId(reservationId);
+            operationLog.setDetails(String.format("更新预约状态为: %s", status));
+            operationLogService.save(operationLog);
+            
+            // 记录服务日志
+            log.info("Updated reservation {} status to {} by admin {}", reservationId, status, adminId);
         } else {
             log.warn("Reservation {} not found when updating status", reservationId);
+            throw new RuntimeException("预约记录不存在");
         }
     }
 
