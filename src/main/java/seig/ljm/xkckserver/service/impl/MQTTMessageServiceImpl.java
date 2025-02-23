@@ -450,6 +450,8 @@ public class MQTTMessageServiceImpl implements MQTTMessageService {
         }
     }
 
+    
+
     @Data
     private static class EmergencyControlData {
         private String action;
