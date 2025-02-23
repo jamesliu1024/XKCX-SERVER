@@ -13,6 +13,7 @@ import seig.ljm.xkckserver.service.RfidCardRecordService;
 import seig.ljm.xkckserver.service.RfidCardService;
 import seig.ljm.xkckserver.service.CardOperationService;
 import seig.ljm.xkckserver.mqtt.MQTTGateway;
+import seig.ljm.xkckserver.service.DelayedMqttService;
 
 import java.time.ZonedDateTime;
 import java.util.concurrent.CompletableFuture;
@@ -26,25 +27,29 @@ public class CardOperationServiceImpl implements CardOperationService {
     private final RfidCardService rfidCardService;
     private final RfidCardRecordService rfidCardRecordService;
     private final MQTTGateway mqttGateway;
+    private final DelayedMqttService delayedMqttService;
 
     public CardOperationServiceImpl(
             RedisTemplate<String, Object> redisTemplate,
             ObjectMapper objectMapper,
             RfidCardService rfidCardService,
             RfidCardRecordService rfidCardRecordService,
-            MQTTGateway mqttGateway) {
+            MQTTGateway mqttGateway,
+            DelayedMqttService delayedMqttService) {
         this.redisTemplate = redisTemplate;
         this.objectMapper = objectMapper;
         this.rfidCardService = rfidCardService;
         this.rfidCardRecordService = rfidCardRecordService;
         this.mqttGateway = mqttGateway;
+        this.delayedMqttService = delayedMqttService;
     }
 
     private void sendCardOperationMessage(String deviceId, String uid, String operationType) {
         try {
             long timestamp = System.currentTimeMillis() / 1000;
             String message = String.format("quere|%s|%s|%s|%d", deviceId, uid, operationType, timestamp);
-            mqttGateway.sendToMqtt("xkck/device/" + deviceId + "/command", message);
+            String topic = "xkck/device/" + deviceId + "/command";
+            delayedMqttService.sendDelayedMessage(topic, message, 2000);
             log.info("Sent card operation message: {} to device: {}", message, deviceId);
         } catch (Exception e) {
             log.error("Error sending card operation message: ", e);
@@ -79,7 +84,7 @@ public class CardOperationServiceImpl implements CardOperationService {
                             }
                             success = processIssueCard(card, data, reservation);
                             if (success) {
-                                sendCardOperationMessage(data.getDeviceId(), data.getUid(), "issue");
+                                sendCardOperationMessage(data.getDeviceId(), data.getUid(), "issued");
                             }
                         } else if ("return".equals(data.getOperationType())) {
                             // 验证卡片状态是否为已发放
@@ -90,7 +95,7 @@ public class CardOperationServiceImpl implements CardOperationService {
                             }
                             success = processReturnCard(card, data);
                             if (success) {
-                                sendCardOperationMessage(data.getDeviceId(), data.getUid(), "return");
+                                sendCardOperationMessage(data.getDeviceId(), data.getUid(), "returned");
                             }
                         }
                         // 操作成功后删除Redis数据
