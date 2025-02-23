@@ -180,8 +180,9 @@ public interface ReservationService extends IService<Reservation> {
      * @param reservationId 预约ID
      * @param status 新状态
      * @param adminId 操作管理员ID
+     * @param remarks 备注信息
      */
-    void updateStatus(Integer reservationId, String status, Integer adminId);
+    void updateStatus(Integer reservationId, String status, Integer adminId, String remarks);
 
     /**
      * 获取待审核预约数量

@@ -241,11 +241,12 @@ public class ReservationServiceImpl extends ServiceImpl<ReservationMapper, Reser
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public void updateStatus(Integer reservationId, String status, Integer adminId) {
+    public void updateStatus(Integer reservationId, String status, Integer adminId, String remarks) {
         Reservation reservation = getById(reservationId);
         if (reservation != null) {
             reservation.setStatus(status);
             reservation.setUpdateTime(ZonedDateTime.now(TimeZoneConstant.ZONE_ID));
+            reservation.setRemarks(remarks);
 
             // 如果状态是已确认，则需要检查配额
             if (status.equals("confirmed")) {
@@ -267,11 +268,12 @@ public class ReservationServiceImpl extends ServiceImpl<ReservationMapper, Reser
             operationLog.setOperatorId(adminId);
             operationLog.setOperationType("UPDATE_RESERVATION_STATUS");
             operationLog.setTargetId(reservationId);
-            operationLog.setDetails(String.format("更新预约状态为: %s", status));
+            operationLog.setDetails(String.format("更新预约状态为: %s, 备注: %s", status, remarks));
             operationLogService.save(operationLog);
             
             // 记录服务日志
-            log.info("Updated reservation {} status to {} by admin {}", reservationId, status, adminId);
+            log.info("Updated reservation {} status to {} by admin {}, remarks: {}", 
+                reservationId, status, adminId, remarks);
         } else {
             log.warn("Reservation {} not found when updating status", reservationId);
             throw new RuntimeException("预约记录不存在");
