@@ -14,11 +14,15 @@ import seig.ljm.xkckserver.common.security.RequireRole;
 import seig.ljm.xkckserver.entity.*;
 import seig.ljm.xkckserver.service.*;
 import com.alibaba.fastjson.JSON;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import seig.ljm.xkckserver.common.utils.RedisUtil;
+import seig.ljm.xkckserver.mqtt.MQTTGateway;
 
 import java.time.LocalDate;
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 import static seig.ljm.xkckserver.common.constant.EnumConstant.Visitor.Role.ADMIN;
 
@@ -39,6 +43,9 @@ public class AdminController {
     private final QuotaSettingService quotaSettingService;
     private final BlacklistRecordService blacklistRecordService;
     private final OperationLogService operationLogService;
+    private final RedisUtil redisUtil;
+    private final MQTTGateway mqttGateway;
+    private final ObjectMapper objectMapper;
 
     // 1. 用户管理相关接口
     @GetMapping("/visitor/{visitorId}")
@@ -132,6 +139,13 @@ public class AdminController {
             @RequestParam String status) {
         reservationService.updateStatus(reservationId, status);
         return ApiResult.success();
+    }
+
+    @GetMapping("/reservation/{reservationId}")
+    @Operation(summary = "获取预约详情")
+    public ApiResult<Reservation> getReservationDetail(
+            @Parameter(description = "预约ID") @PathVariable Integer reservationId) {
+        return ApiResult.success(reservationService.getById(reservationId));
     }
 
     // 3. RFID卡片管理相关接口
