@@ -383,6 +383,26 @@ public class AdminController {
                 return ApiResult.error("预约未确认");
             }
 
+            // 检查是否已发卡
+            RfidCardRecord latestRecord = rfidCardRecordService.getLatestCardRecord(reservationId);
+            if (latestRecord != null) {
+                if ("issue".equals(latestRecord.getOperationType())) {
+                    return ApiResult.error("该预约已发放卡片，不能重复发卡");
+                }
+                if (!"return".equals(latestRecord.getOperationType())) {
+                    return ApiResult.error("该预约有未完成的卡片操作");
+                }
+            }
+
+            // 检查预约时间是否有效
+            ZonedDateTime now = ZonedDateTime.now(TimeZoneConstant.ZONE_ID);
+            if (now.isAfter(reservation.getEndTime())) {
+                return ApiResult.error("预约已过期");
+            }
+            if (now.isBefore(reservation.getStartTime())) {
+                return ApiResult.error("预约时间未到");
+            }
+
             // 准备Redis数据
             CardOperationDTO operationDTO = new CardOperationDTO();
             operationDTO.setReservationId(reservationId);
@@ -421,11 +441,36 @@ public class AdminController {
                 return ApiResult.error("预约记录不存在");
             }
 
+            // 获取最新的卡片操作记录
+            RfidCardRecord latestRecord = rfidCardRecordService.getLatestCardRecord(reservationId);
+            if (latestRecord == null) {
+                return ApiResult.error("该预约没有任何卡片操作记录");
+            }
+
+            // 检查最新记录是否为发卡记录
+            if (!"issue".equals(latestRecord.getOperationType())) {
+                if ("return".equals(latestRecord.getOperationType())) {
+                    return ApiResult.error("该预约的卡片已经归还，不能重复还卡");
+                } else {
+                    return ApiResult.error("该预约的卡片状态异常，最新操作为：" + latestRecord.getOperationType());
+                }
+            }
+
+            // 验证卡片状态
+            RfidCard card = rfidCardService.getById(latestRecord.getCardId());
+            if (card == null) {
+                return ApiResult.error("卡片不存在");
+            }
+            if (!"issued".equals(card.getStatus())) {
+                return ApiResult.error("卡片状态不是已发放状态，无法执行还卡操作");
+            }
+
             // 准备Redis数据
             CardOperationDTO operationDTO = new CardOperationDTO();
             operationDTO.setReservationId(reservationId);
             operationDTO.setAdminId(adminId);
             operationDTO.setOperationType("return");
+            operationDTO.setCardId(card.getCardId()); // 添加卡片ID用于后续验证
 
             // 存储到Redis
             String redisKey = "card_operation:" + deviceId;
