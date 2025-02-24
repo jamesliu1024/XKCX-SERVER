@@ -22,6 +22,10 @@ public class AuthInterceptor implements HandlerInterceptor {
 
     @Override
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws Exception {
+        
+        log.info("请求路径: {}", request.getRequestURI());
+        log.info("Authorization头: {}", request.getHeader("Authorization"));
+        
         // 如果不是映射到方法，直接通过
         if (!(handler instanceof HandlerMethod)) {
             return true;
@@ -49,12 +53,15 @@ public class AuthInterceptor implements HandlerInterceptor {
 
         // 验证token
         if (!jwtUtils.validateToken(token)) {
+            log.error("Token验证失败");
             response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
             return false;
         }
 
-        // 获取角色并验证
         String role = jwtUtils.getRoleFromToken(token);
+        log.info("Token中的角色: {}", role);
+
+        // 获取角色并验证
         String requiredRole = requireRole.value();
 
         // 如果需要admin权限，只有admin可以访问
