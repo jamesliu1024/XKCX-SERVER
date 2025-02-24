@@ -1,4 +1,4 @@
-package seig.ljm.xkckserver.mqtt.dto;
+package seig.ljm.xkckserver.dto;
 
 import lombok.Data;
 

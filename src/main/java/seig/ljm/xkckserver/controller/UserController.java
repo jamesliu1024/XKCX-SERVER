@@ -26,7 +26,7 @@ import static seig.ljm.xkckserver.common.constant.EnumConstant.Visitor.Role.VISI
 @RequestMapping("/api/user")
 @RequiredArgsConstructor
 @Tag(name = "用户接口", description = "处理普通用户的功能请求")
-// @RequireRole(value = VISITOR)
+@RequireRole(value = VISITOR)
 public class UserController {
 
     private final VisitorService visitorService;
@@ -67,16 +67,38 @@ public class UserController {
             @Parameter(description = "预约状态") @RequestParam(required = false) String status,
             @Parameter(description = "开始日期") @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate startDate,
             @Parameter(description = "结束日期") @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate endDate) {
-        ZonedDateTime startTime = startDate != null ? startDate.atStartOfDay(TimeZoneConstant.ZONE_ID) : null;
-        ZonedDateTime endTime = endDate != null ? endDate.plusDays(1).atStartOfDay(TimeZoneConstant.ZONE_ID) : null;
-        return ApiResult.success(reservationService.getReservationPage(current, size, visitorId, startTime, endTime, status));
+        log.info("获取访客{}的预约列表, 状态: {}, 时间范围: {} - {}", visitorId, status, startDate, endDate);
+        
+        try {
+            ZonedDateTime startTime = startDate != null ? startDate.atStartOfDay(TimeZoneConstant.ZONE_ID) : null;
+            ZonedDateTime endTime = endDate != null ? endDate.plusDays(1).atStartOfDay(TimeZoneConstant.ZONE_ID) : null;
+            
+            IPage<Reservation> result = reservationService.getReservationPage(current, size, visitorId, startTime, endTime, status);
+            log.info("查询到{}条预约记录", result.getTotal());
+            return ApiResult.success(result);
+        } catch (Exception e) {
+            log.error("获取预约列表失败", e);
+            return ApiResult.error("获取预约列表失败：" + e.getMessage());
+        }
     }
 
     @GetMapping("/reservation/{reservationId}")
     @Operation(summary = "获取预约详情")
     public ApiResult<Reservation> getReservationDetail(
-            @Parameter(description = "预约ID") @PathVariable Integer reservationId) {
-        return ApiResult.success(reservationService.getById(reservationId));
+            @Parameter(description = "预约ID") @PathVariable Integer reservationId,
+            @Parameter(description = "访客ID") @RequestParam Integer visitorId) {
+        // 获取预约信息
+        Reservation reservation = reservationService.getById(reservationId);
+        if (reservation == null) {
+            return ApiResult.error("预约记录不存在");
+        }
+        
+        // 验证访问权限
+        if (!reservation.getVisitorId().equals(visitorId)) {
+            return ApiResult.error("无权访问此预约记录");
+        }
+        
+        return ApiResult.success(reservation);
     }
 
     @PutMapping("/reservation/{reservationId}")

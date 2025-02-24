@@ -18,12 +18,10 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import seig.ljm.xkckserver.common.utils.RedisUtil;
 import seig.ljm.xkckserver.mqtt.MQTTGateway;
 import org.springframework.data.redis.core.RedisTemplate;
-import seig.ljm.xkckserver.mqtt.dto.CardOperationDTO;
-import seig.ljm.xkckserver.service.impl.CardOperationServiceImpl;
+import seig.ljm.xkckserver.dto.CardOperationDTO;
 
 import java.time.LocalDate;
 import java.time.ZonedDateTime;
-import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
@@ -34,7 +32,7 @@ import static seig.ljm.xkckserver.common.constant.EnumConstant.Visitor.Role.ADMI
 @RequestMapping("/api/admin")
 @RequiredArgsConstructor
 @Tag(name = "管理员接口", description = "处理管理员特有的功能请求")
-// @RequireRole(value = ADMIN)
+ @RequireRole(value = ADMIN)
 public class AdminController {
 
     private final VisitorService visitorService;

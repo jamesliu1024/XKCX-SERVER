@@ -8,6 +8,7 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import seig.ljm.xkckserver.common.constant.TimeZoneConstant;
+import seig.ljm.xkckserver.dto.CardOperationDTO;
 import seig.ljm.xkckserver.entity.AccessDevice;
 import seig.ljm.xkckserver.entity.AccessLog;
 import seig.ljm.xkckserver.entity.MessageLog;
@@ -19,8 +20,6 @@ import seig.ljm.xkckserver.mqtt.dto.*;
 import seig.ljm.xkckserver.service.*;
 
 import java.time.ZonedDateTime;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 @Slf4j
 @Service

@@ -8,7 +8,7 @@ import org.springframework.stereotype.Service;
 import seig.ljm.xkckserver.entity.RfidCard;
 import seig.ljm.xkckserver.entity.RfidCardRecord;
 import seig.ljm.xkckserver.entity.Reservation;
-import seig.ljm.xkckserver.mqtt.dto.CardOperationDTO;
+import seig.ljm.xkckserver.dto.CardOperationDTO;
 import seig.ljm.xkckserver.service.RfidCardRecordService;
 import seig.ljm.xkckserver.service.RfidCardService;
 import seig.ljm.xkckserver.service.CardOperationService;
